@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>biggis</groupId>
   <artifactId>biggis-landuse</artifactId>
@@ -20,9 +21,18 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
+    <geotrellis.version>0.10.2</geotrellis.version>
   </properties>
 
   <dependencies>
+
+    <!-- ==== GEOTRELLIS ========================== -->
+    <dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-spark_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
@@ -36,16 +46,16 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-core_${scala.compat.version}</artifactId>
+      <version>3.8.5</version>
+    </dependency>
     <dependency>
       <groupId>org.specs2</groupId>
       <artifactId>specs2-junit_${scala.compat.version}</artifactId>
-      <version>2.4.16</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-    	<groupId>com.azavea.geotrellis</groupId>
-    	<artifactId>geotrellis-spark_${scala.compat.version}</artifactId>
-    	<version>0.10.2</version>
+      <version>3.8.5</version>
     </dependency>
   </dependencies>
 
@@ -66,7 +76,6 @@
             </goals>
             <configuration>
               <args>
-                <arg>-make:transitive</arg>
                 <arg>-dependencyfile</arg>
                 <arg>${project.build.directory}/.scala_dependencies</arg>
               </args>
@@ -92,12 +101,12 @@
     </plugins>
   </build>
   <organization>
-  	<name>BigGIS Project</name>
-  	<url>http://biggis-project.eu/</url>
+    <name>BigGIS Project</name>
+    <url>http://biggis-project.eu/</url>
   </organization>
   <issueManagement>
-  	<system>Github Issue Tracker</system>
-  	<url>https://github.com/biggis-project/biggis-landuse/issues</url>
+    <system>Github Issue Tracker</system>
+    <url>https://github.com/biggis-project/biggis-landuse/issues</url>
   </issueManagement>
   <url>https://github.com/biggis-project/biggis-landuse</url>
 </project>
