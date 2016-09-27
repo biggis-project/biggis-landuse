@@ -4,8 +4,8 @@
   <artifactId>biggis-landuse</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>${project.artifactId}</name>
-  <description>My wonderfull scala app</description>
-  <inceptionYear>2015</inceptionYear>
+  <description>Land use update detection based on Geotrellis and Spark</description>
+  <inceptionYear>2016</inceptionYear>
   <licenses>
     <license>
       <name>My License</name>
@@ -18,7 +18,7 @@
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
     <encoding>UTF-8</encoding>
-    <scala.version>2.11.5</scala.version>
+    <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
   </properties>
 
@@ -91,4 +91,13 @@
       </plugin>
     </plugins>
   </build>
+  <organization>
+  	<name>BigGIS Project</name>
+  	<url>http://biggis-project.eu/</url>
+  </organization>
+  <issueManagement>
+  	<system>Github Issue Tracker</system>
+  	<url>https://github.com/biggis-project/biggis-landuse/issues</url>
+  </issueManagement>
+  <url>https://github.com/biggis-project/biggis-landuse</url>
 </project>
