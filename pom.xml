@@ -7,6 +7,16 @@
   <name>${project.artifactId}</name>
   <description>Land use update detection based on Geotrellis and Spark</description>
   <inceptionYear>2016</inceptionYear>
+  <organization>
+    <name>BigGIS Project</name>
+    <url>http://biggis-project.eu/</url>
+  </organization>
+  <issueManagement>
+    <system>Github Issue Tracker</system>
+    <url>https://github.com/biggis-project/biggis-landuse/issues</url>
+  </issueManagement>
+  <url>https://github.com/biggis-project/biggis-landuse</url>
+  
   <licenses>
     <license>
       <name>My License</name>
@@ -39,7 +49,17 @@
       <version>${scala.version}</version>
     </dependency>
 
-    <!-- Test -->
+    <!-- ==== SPARK ========================== -->
+    
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_${scala.compat.version}</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+
+
+    <!-- ==== Testing ========================== -->
+    
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -100,13 +120,4 @@
       </plugin>
     </plugins>
   </build>
-  <organization>
-    <name>BigGIS Project</name>
-    <url>http://biggis-project.eu/</url>
-  </organization>
-  <issueManagement>
-    <system>Github Issue Tracker</system>
-    <url>https://github.com/biggis-project/biggis-landuse/issues</url>
-  </issueManagement>
-  <url>https://github.com/biggis-project/biggis-landuse</url>
 </project>
