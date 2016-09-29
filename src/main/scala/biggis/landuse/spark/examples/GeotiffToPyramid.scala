@@ -7,12 +7,10 @@ import org.apache.spark.rdd.RDD
 import com.typesafe.scalalogging.slf4j.StrictLogging
 
 import geotrellis.proj4.WebMercator
-import geotrellis.raster.Tile
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
 import geotrellis.raster.withTileMethods
 import geotrellis.spark.LayerId
-import geotrellis.spark.SpatialKey
 import geotrellis.spark.TileLayerMetadata
 import geotrellis.spark.TileLayerRDD
 import geotrellis.spark.io.SpatialKeyFormat
@@ -32,42 +30,39 @@ import geotrellis.spark.withProjectedExtentTilerKeyMethods
 import geotrellis.spark.withStatsTileRDDMethods
 import geotrellis.spark.withTileRDDReprojectMethods
 import geotrellis.spark.withTilerMethods
-import geotrellis.spark.Metadata
 
 object GeotiffToPyramid extends StrictLogging {
 
   /**
-   * Run as: /path/to/raster.tif some_layer /path/to/some/dir
-   */
+    * Run as: /path/to/raster.tif some_layer /path/to/some/dir
+    */
   def main(args: Array[String]): Unit = {
     val Array(inputPath, layerName, catalogPath) = args
     GeotiffToPyramid(inputPath, layerName)(catalogPath)
   }
-  
-  def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
-    
-    logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
 
+  def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
+
+    logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
+    logger info "hi"
     val sparkConf =
       new SparkConf()
         .setMaster("local[*]")
         .setAppName("Spark Tiler")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
-        
+
     implicit val sc = new SparkContext(sparkConf)
-    
+
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
-    val (_, myRasterMetaData:TileLayerMetadata[SpatialKey]) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(512))
-    
-    val tiled: RDD[(SpatialKey, Tile)] = inputRdd
-        .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, Bilinear)
-        .repartition(12)
+    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(512))
+
+    val tiled = inputRdd
+      .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, Bilinear)
+      .repartition(12)
 
     val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = 512)
-    
-    val (zoom, reprojected): (Int, RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]) =
-      TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, Bilinear)
+    val (zoom, reprojected) = TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, Bilinear)
 
     // Create the attributes store that will tell us information about our catalog.
     val attributeStore = FileAttributeStore(catalogPath)
@@ -87,17 +82,17 @@ object GeotiffToPyramid extends StrictLogging {
       }
 
       writer.write(layerId, rdd, ZCurveKeyIndexMethod)
-      
+
       if (z == 0) {
         val id = LayerId(layerName, 0)
         writer.attributeStore.write(id, "histogramData", hist)
       }
     }
-    
+
     sc.stop()
-    
+
     logger debug s"Pyramid '$layerName' is ready in catalog '$catalogPath'"
     logger debug s"Quantile breaks from histogram: ${hist.quantileBreaks(10).mkString(", ")}"
   }
-  
+
 }
