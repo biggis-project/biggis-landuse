@@ -1,35 +1,19 @@
 package biggis.landuse.spark.examples
 
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-
 import com.typesafe.scalalogging.slf4j.StrictLogging
-
 import geotrellis.proj4.WebMercator
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
 import geotrellis.raster.withTileMethods
-import geotrellis.spark.LayerId
-import geotrellis.spark.TileLayerMetadata
-import geotrellis.spark.TileLayerRDD
-import geotrellis.spark.io.SpatialKeyFormat
-import geotrellis.spark.io.file.FileAttributeStore
-import geotrellis.spark.io.file.FileLayerManager
-import geotrellis.spark.io.file.FileLayerWriter
+import geotrellis.spark.io.file.{FileAttributeStore, FileLayerManager, FileLayerWriter}
 import geotrellis.spark.io.hadoop.HadoopSparkContextMethodsWrapper
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
-import geotrellis.spark.io.spatialKeyAvroFormat
-import geotrellis.spark.io.tileLayerMetadataFormat
-import geotrellis.spark.io.tileUnionCodec
+import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import geotrellis.spark.pyramid.Pyramid
-import geotrellis.spark.tiling.FloatingLayoutScheme
-import geotrellis.spark.tiling.ZoomedLayoutScheme
-import geotrellis.spark.withProjectedExtentTilerKeyMethods
-import geotrellis.spark.withStatsTileRDDMethods
-import geotrellis.spark.withTileRDDReprojectMethods
-import geotrellis.spark.withTilerMethods
+import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
+import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withStatsTileRDDMethods, withTileRDDReprojectMethods, withTilerMethods}
+import org.apache.spark.{SparkConf, SparkContext}
 
 object GeotiffToPyramid extends StrictLogging {
 
@@ -44,7 +28,6 @@ object GeotiffToPyramid extends StrictLogging {
   def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
 
     logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
-    logger info "hi"
     val sparkConf =
       new SparkConf()
         .setMaster("local[*]")
