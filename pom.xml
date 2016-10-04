@@ -140,6 +140,11 @@
                 </filter>
               </filters>
               <finalname>HelloW</finalname>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>reference.conf</resource>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
         </executions>
