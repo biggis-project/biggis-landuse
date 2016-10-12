@@ -1,12 +1,12 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.slf4j.StrictLogging
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.spark.io.file.{FileAttributeStore, FileLayerDeleter}
 
 /**
   * Created by Viliam Simko on 10/4/16.
   */
-object DeleteLayer extends StrictLogging {
+object DeleteLayer extends LazyLogging {
   def main(args: Array[String]): Unit = {
     val Array(catalogPath, layerName) = args
     DeleteLayer(layerName)(catalogPath)
