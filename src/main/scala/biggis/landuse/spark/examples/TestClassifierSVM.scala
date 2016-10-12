@@ -11,7 +11,8 @@ import org.apache.spark.{SparkConf, SparkContext}
 object TestClassifierSVM extends StrictLogging {
   /**
     * Run as: /path/to/sample_libsvm_data.txt /path/to/myModel
-    * //Run as: data/mllib/sample_libsvm_data.txt data/mllib/myModel
+    * You can download the dataset from:
+    * - https://raw.githubusercontent.com/apache/spark/master/data/mllib/sample_libsvm_data.txt
     */
   def main(args: Array[String]): Unit = {
     val Array(trainingName, modelPath) = args
