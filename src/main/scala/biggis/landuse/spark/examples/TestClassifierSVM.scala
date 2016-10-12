@@ -2,12 +2,10 @@ package biggis.landuse.spark.examples
 
 
 import com.typesafe.scalalogging.slf4j.StrictLogging
-
 import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.util.MLUtils
-
-import org.apache.spark.{SparkConf,SparkContext}
+import org.apache.spark.{SparkConf, SparkContext}
 
 
 object TestClassifierSVM extends StrictLogging {
@@ -16,16 +14,21 @@ object TestClassifierSVM extends StrictLogging {
     * //Run as: data/mllib/sample_libsvm_data.txt data/mllib/myModel
     */
   def main(args: Array[String]): Unit = {
-    val Array(modelPath, trainingName) = args
+    val Array(trainingName, modelPath) = args
     TestClassifierSVM(trainingName)(modelPath)
   }
 
   def apply(trainingName: String)(implicit modelPath: String): Unit = {
-    logger info s"(SVM) Classifying  layer $trainingName in $modelPath ..."
+    logger info s"(SVM) Classifying layer $trainingName in $modelPath ..."
     //ClassifierSVM
 
 
-    val conf = new SparkConf().setAppName(s"TestClassifierSVM with $trainingName $modelPath")
+    val conf = new SparkConf()
+      .setAppName(s"TestClassifierSVM with $trainingName $modelPath")
+      .setMaster("local[*]")
+      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
     val sc = new SparkContext(conf)
 
     // Load training data in LIBSVM format.
