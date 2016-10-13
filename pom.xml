@@ -57,11 +57,11 @@
       <version>${geotrellis.version}</version>
     </dependency>
 
-    <dependency>
+    <!--dependency>
       <groupId>com.azavea.geotrellis</groupId>
       <artifactId>geotrellis-gdal_${scala.compat.version}</artifactId>
       <version>0.10.0-M1</version>
-    </dependency>
+    </dependency-->
 
 
     <!-- ==== SPARK ========================== -->

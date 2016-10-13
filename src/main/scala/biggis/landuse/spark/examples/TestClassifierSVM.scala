@@ -59,10 +59,14 @@ object TestClassifierSVM extends StrictLogging {
 
     logger info "Area under ROC = " + auROC
 
+    // Delete existing model before saving
+    //val hadoopConf = new org.apache.hadoop.conf.Configuration()
+    //val hdfs = org.apache.hadoop.fs.FileSystem.get(new java.net.URI("hdfs://localhost:9000"), hadoopConf)
+    //try { hdfs.delete(new org.apache.hadoop.fs.Path(modelPath), true) } catch { case _ : Throwable => { } }
+
     // Save and load model
     model.save(sc, modelPath)
     val sameModel = SVMModel.load(sc, modelPath)
-
 
     //ClassifierSVM
     logger info "done"
