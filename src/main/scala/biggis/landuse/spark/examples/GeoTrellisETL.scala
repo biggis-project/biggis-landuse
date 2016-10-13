@@ -31,9 +31,15 @@ object TestGdalReader {
 }
 */
 
-/*
 object GeoTrellisETL extends StrictLogging {
   def main(args: Array[String]): Unit = {
+    val Array(trainingName, modelPath) = args
+    GeoTrellisETL(args)
+  }
+
+  def apply(args: Array[String])(): Unit = {
+    logger info s"GeoTrellisETL"
+    //GeoTrellisETL
     implicit val sc = SparkUtils.createSparkContext("GeoTrellis ETL",
       new SparkConf(true)
         .setMaster("local[*]")
@@ -41,6 +47,9 @@ object GeoTrellisETL extends StrictLogging {
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     )
+    geotrellis.spark.etl.MultibandIngest.main(args)
+    //Etl.ingest[ProjectedExtent, SpatialKey, MultibandTile]
+    /*
     type I = ProjectedExtent // or TemporalProjectedExtent for temporal ingest
     type K = SpatialKey // or SpaceTimeKey for temporal ingest
     type V = Tile // or MultibandTile to ingest multiband tile
@@ -61,6 +70,7 @@ object GeoTrellisETL extends StrictLogging {
     } finally {
       sc.stop()
     }
+    */
   }
 }
-*/
+
