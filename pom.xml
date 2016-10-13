@@ -32,6 +32,8 @@
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
     <geotrellis.version>0.10.2</geotrellis.version>
+    <spark.version>1.6.2</spark.version>
+    <!--spark.version>2.0.1</spark.version-->
   </properties>
 
   <dependencies>
@@ -49,18 +51,31 @@
       <version>${scala.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-spark-etl_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-gdal_${scala.compat.version}</artifactId>
+      <version>0.10.0-M1</version>
+    </dependency>
+
+
     <!-- ==== SPARK ========================== -->
 
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.compat.version}</artifactId>
-      <version>1.6.2</version>
+      <version>${spark.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-mllib_${scala.compat.version}</artifactId>
-      <version>1.6.2</version>
+      <version>${spark.version}</version>
     </dependency>
 
     <!-- ==== Testing ========================== -->
