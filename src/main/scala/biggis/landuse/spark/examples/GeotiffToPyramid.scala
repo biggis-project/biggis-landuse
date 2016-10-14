@@ -17,12 +17,13 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 object GeotiffToPyramid extends StrictLogging {
 
-  /**
-    * Run as: /path/to/raster.tif some_layer /path/to/some/dir
-    */
   def main(args: Array[String]): Unit = {
-    val Array(inputPath, layerName, catalogPath) = args
-    GeotiffToPyramid(inputPath, layerName)(catalogPath)
+    try {
+      val Array(inputPath, layerName, catalogPath) = args
+      GeotiffToPyramid(inputPath, layerName)(catalogPath)
+    } catch {
+      case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
+    }
   }
 
   def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
