@@ -4,12 +4,19 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
 import geotrellis.raster.Tile
 import geotrellis.spark._
 import geotrellis.spark.etl.Etl
+import geotrellis.spark.io.index._
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.etl.EtlConf
+import geotrellis.raster.MultibandTile
+import geotrellis.raster.io.geotiff._
+import geotrellis.proj4._
 import geotrellis.spark.util.SparkUtils
-import geotrellis.vector.ProjectedExtent
+import geotrellis.vector.{Extent,ProjectedExtent}
+//import geotrellis.config.json.dataset.JConfig
 import org.apache.spark.SparkConf
 //import geotrellis.gdal._
+
+//https://mvnrepository.com/artifact/com.azavea.geotrellis
 
 /*
 object SinglebandIngest {
@@ -23,7 +30,6 @@ object SinglebandIngest {
   }
 }
 */
-
 /*
 object TestGdalReader {
   val firstBand: (Tile, RasterExtent) =
@@ -33,22 +39,27 @@ object TestGdalReader {
 
 object GeoTrellisETL extends StrictLogging {
   def main(args: Array[String]): Unit = {
-    val Array(trainingName, modelPath) = args
+    //val Array(input, output) = args
     GeoTrellisETL(args)
   }
 
   def apply(args: Array[String])(): Unit = {
-    logger info s"GeoTrellisETL"
+    logger info s"GeoTrellis ETL MultibandIngest"
     //GeoTrellisETL
-    implicit val sc = SparkUtils.createSparkContext("GeoTrellis ETL",
+    implicit val sc = SparkUtils.createSparkContext("GeoTrellis ETL MultibandIngest",
       new SparkConf(true)
         .setMaster("local[*]")
-        .setAppName("GeoTrellisETL")
+        .setAppName("GeoTrellis ETL MultibandIngest")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     )
-    geotrellis.spark.etl.MultibandIngest.main(args)
-    //Etl.ingest[ProjectedExtent, SpatialKey, MultibandTile]
+    try {
+      Etl.ingest[ProjectedExtent, SpatialKey, MultibandTile](args,geotrellis.spark.io.index.ZCurveKeyIndexMethod)
+      //geotrellis.spark.etl.MultibandIngest.main(args)
+      //Etl.ingest[ProjectedExtent, SpatialKey, MultibandTile](args)
+    } finally {
+      sc.stop()
+    }
     /*
     type I = ProjectedExtent // or TemporalProjectedExtent for temporal ingest
     type K = SpatialKey // or SpaceTimeKey for temporal ingest

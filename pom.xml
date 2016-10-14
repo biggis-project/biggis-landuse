@@ -31,7 +31,7 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
-    <geotrellis.version>0.10.2</geotrellis.version>
+    <geotrellis.version>0.10.3</geotrellis.version>
     <spark.version>1.6.2</spark.version>
     <!--spark.version>2.0.1</spark.version-->
   </properties>
@@ -59,10 +59,51 @@
 
     <!--dependency>
       <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-util_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency-->
+
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-raster_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency-->
+
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-vector_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency-->
+
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-shapefile_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency-->
+
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-proj4_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency-->
+
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-accumulo_${scala.compat.version}</artifactId>
+      <version>${geotrellis.version}</version>
+    </dependency-->
+
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
       <artifactId>geotrellis-gdal_${scala.compat.version}</artifactId>
       <version>0.10.0-M1</version>
     </dependency-->
 
+    <!--dependency>
+      <groupId>com.azavea.geotrellis</groupId>
+      <artifactId>geotrellis-geotools_${scala.compat.version}</artifactId>
+      <version>0.10.0-M1</version>
+    </dependency-->
 
     <!-- ==== SPARK ========================== -->
 
@@ -160,7 +201,7 @@
                   </excludes>
                 </filter>
               </filters>
-              <finalname>HelloW</finalname>
+              <!--finalname>HelloW</finalname-->
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>reference.conf</resource>
