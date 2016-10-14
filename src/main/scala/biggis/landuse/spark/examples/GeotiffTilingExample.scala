@@ -1,8 +1,7 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.slf4j.StrictLogging
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.proj4.WebMercator
-import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
 import geotrellis.raster.withTileMethods
 import geotrellis.spark.io.file.{FileAttributeStore, FileLayerManager, FileLayerWriter}
@@ -10,17 +9,24 @@ import geotrellis.spark.io.hadoop.HadoopSparkContextMethodsWrapper
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
-import geotrellis.spark.pyramid.Pyramid
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
-import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withStatsTileRDDMethods, withTileRDDReprojectMethods, withTilerMethods}
+import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
 import org.apache.spark.{SparkConf, SparkContext}
 
-object GeotiffToPyramid extends StrictLogging {
 
+object GeotiffTilingExample extends LazyLogging {
+
+  private val TILE_SIZE = 512
+  private val RDD_PARTITIONS = 24
+  private val RESAMPLING_METHOD = Bilinear
+
+  /**
+    * Run as: /path/to/raster.tif some_layer /path/to/some/dir
+    */
   def main(args: Array[String]): Unit = {
     try {
       val Array(inputPath, layerName, catalogPath) = args
-      GeotiffToPyramid(inputPath, layerName)(catalogPath)
+      GeotiffTilingExample(inputPath, layerName)(catalogPath)
     } catch {
       case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
     }
@@ -28,7 +34,8 @@ object GeotiffToPyramid extends StrictLogging {
 
   def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
 
-    logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
+    logger info s"Loading geotiff '$inputPath' into '$layerName' in catalog '$catalogPath' ... "
+
     val sparkConf =
       new SparkConf()
         .setMaster("local[*]")
@@ -38,45 +45,38 @@ object GeotiffToPyramid extends StrictLogging {
 
     implicit val sc = new SparkContext(sparkConf)
 
+    logger debug "Opening geotiff as RDD"
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
-    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(512))
+    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(TILE_SIZE))
 
     val tiled = inputRdd
-      .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, Bilinear)
-      .repartition(12)
+      .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, RESAMPLING_METHOD)
+      .repartition(RDD_PARTITIONS)
 
-    val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = 512)
-    val (zoom, reprojected) = TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, Bilinear)
+    val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = TILE_SIZE)
+
+    logger debug "Reprojecting to WebMercator"
+    val (zoom, reprojected) =
+      TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, RESAMPLING_METHOD)
 
     // Create the attributes store that will tell us information about our catalog.
     val attributeStore = FileAttributeStore(catalogPath)
 
     // Create the writer that we will use to store the tiles in the local catalog.
     val writer = FileLayerWriter(attributeStore)
+    val layerId = LayerId(layerName, zoom)
 
-    val hist = reprojected.histogram()
-
-    // Pyramiding up the zoom levels, write our tiles out to the local file system.
-    Pyramid.upLevels(reprojected, layoutScheme, zoom) { (rdd, z) =>
-      val layerId = LayerId(layerName, z)
-
-      // If the layer exists already, delete it out before writing
-      if (attributeStore.layerExists(layerId)) {
-        new FileLayerManager(attributeStore).delete(layerId)
-      }
-
-      writer.write(layerId, rdd, ZCurveKeyIndexMethod)
-
-      if (z == 0) {
-        val id = LayerId(layerName, 0)
-        writer.attributeStore.write(id, "histogramData", hist)
-      }
+    // If the layer exists already, delete it out before writing
+    if (attributeStore.layerExists(layerId)) {
+      new FileLayerManager(attributeStore).delete(layerId)
     }
 
+    logger debug "Writing reprojected tiles using space filling curve"
+    writer.write(layerId, reprojected, ZCurveKeyIndexMethod)
+
     sc.stop()
+    logger debug "Spark context stopped"
 
-    logger debug s"Pyramid '$layerName' is ready in catalog '$catalogPath'"
-    logger debug s"Quantile breaks from histogram: ${hist.quantileBreaks(10).mkString(", ")}"
+    logger info "done."
   }
-
 }
