@@ -7,7 +7,6 @@ import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.{SparkConf, SparkContext}
 
-
 object TestClassifierSVM extends StrictLogging {
   /**
     * Run as: /path/to/sample_libsvm_data.txt /path/to/myModel
@@ -15,8 +14,12 @@ object TestClassifierSVM extends StrictLogging {
     * - https://raw.githubusercontent.com/apache/spark/master/data/mllib/sample_libsvm_data.txt
     */
   def main(args: Array[String]): Unit = {
-    val Array(trainingName, modelPath) = args
-    TestClassifierSVM(trainingName)(modelPath)
+    try {
+      val Array(trainingName, modelPath) = args
+      TestClassifierSVM(trainingName)(modelPath)
+    } catch {
+      case _: MatchError => println("Run as: /path/to/sample_libsvm_data.txt /path/to/myModel")
+    }
   }
 
   def apply(trainingName: String)(implicit modelPath: String): Unit = {
