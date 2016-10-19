@@ -62,11 +62,12 @@ object TestClassifierSVM extends StrictLogging {
 
     logger info "Area under ROC = " + auROC
 
-    // Delete existing model before saving
+    // If the model exists already, delete it before writing
     // http://stackoverflow.com/questions/27033823/how-to-overwrite-the-output-directory-in-spark
     val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
-    try { hdfs.delete(new org.apache.hadoop.fs.Path(modelPath), true)} catch { case _ : Throwable =>  }
-
+    if(hdfs.exists(new org.apache.hadoop.fs.Path(modelPath))){
+      try { hdfs.delete(new org.apache.hadoop.fs.Path(modelPath), true)} catch { case _ : Throwable =>  }
+    }
     // Save and load model
     model.save(sc, modelPath)
     val sameModel = SVMModel.load(sc, modelPath)
