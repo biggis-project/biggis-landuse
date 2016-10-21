@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.util.MLUtils
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 object TestClassifierSVM extends StrictLogging {
   /**
@@ -19,6 +19,7 @@ object TestClassifierSVM extends StrictLogging {
       TestClassifierSVM(trainingName)(modelPath)
     } catch {
       case _: MatchError => println("Run as: /path/to/sample_libsvm_data.txt /path/to/myModel")
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
@@ -29,9 +30,13 @@ object TestClassifierSVM extends StrictLogging {
 
     val conf = new SparkConf()
       .setAppName(s"TestClassifierSVM with $trainingName $modelPath")
-      .setMaster("local[*]")
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
 
     val sc = new SparkContext(conf)
 

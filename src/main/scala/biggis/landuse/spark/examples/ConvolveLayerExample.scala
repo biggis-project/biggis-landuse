@@ -9,7 +9,7 @@ import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 object ConvolveLayerExample extends LazyLogging {
 
@@ -19,6 +19,7 @@ object ConvolveLayerExample extends LazyLogging {
       ConvolveLayerExample(layerName, circleKernelRadius.toInt)(catalogPath)
     } catch {
       case _: MatchError => println("Run as: layerName circleKernelRadius /path/to/catalog")
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
@@ -28,10 +29,14 @@ object ConvolveLayerExample extends LazyLogging {
 
     val sparkConf =
       new SparkConf()
-        .setMaster("local[*]")
         .setAppName("Geotrellis-based convolution of a layer using circular kernel")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
 
     implicit val sc = new SparkContext(sparkConf)
 
@@ -40,7 +45,7 @@ object ConvolveLayerExample extends LazyLogging {
     val layerReader = FileLayerReader(attributeStore)
 
     val zoomsOfLayer = attributeStore.layerIds filter (_.name == layerName)
-    if(zoomsOfLayer.isEmpty) {
+    if (zoomsOfLayer.isEmpty) {
       logger info s"Layer '$layerName' not found in the catalog '$catalogPath'"
       return
     }
@@ -48,7 +53,7 @@ object ConvolveLayerExample extends LazyLogging {
     val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
     logger debug s"The following layerId will be used: $srcLayerId"
 
-    val queryResult:RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReader
+    val queryResult: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReader
       .read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](srcLayerId)
 
     val focalKernel = Kernel.circle(circleKernelRadius, queryResult.metadata.cellwidth, circleKernelRadius)

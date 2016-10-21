@@ -1,10 +1,11 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 import geotrellis.shapefile.ShapeFileReader
 import geotrellis.vector._
 import geotrellis.raster._
+
 import scala.collection.JavaConverters._
 import com.vividsolutions.jts.{geom => jts}
 
@@ -20,6 +21,7 @@ object ShapefileExample extends LazyLogging {
       ShapefileExample(shapeName)(catalogPath)
     } catch {
       case _: MatchError => println("Run as: shapeName /path/to/catalog")
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
@@ -28,10 +30,14 @@ object ShapefileExample extends LazyLogging {
 
     val sparkConf =
       new SparkConf()
-        .setMaster("local[*]")
         .setAppName("Geotrellis-based convolution of a layer using circular kernel")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
 
     implicit val sc = new SparkContext(sparkConf)
 

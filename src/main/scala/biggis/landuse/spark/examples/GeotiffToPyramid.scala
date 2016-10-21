@@ -13,7 +13,7 @@ import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMet
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
 import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withStatsTileRDDMethods, withTileRDDReprojectMethods, withTilerMethods}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 object GeotiffToPyramid extends StrictLogging {
 
@@ -23,6 +23,7 @@ object GeotiffToPyramid extends StrictLogging {
       GeotiffToPyramid(inputPath, layerName)(catalogPath)
     } catch {
       case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
@@ -31,10 +32,14 @@ object GeotiffToPyramid extends StrictLogging {
     logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
     val sparkConf =
       new SparkConf()
-        .setMaster("local[*]")
         .setAppName("Spark Tiler")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
 
     implicit val sc = new SparkContext(sparkConf)
 
