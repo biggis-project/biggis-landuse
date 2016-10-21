@@ -74,11 +74,11 @@
       <version>${geotrellis.version}</version>
     </dependency-->
 
-    <!--dependency>
+    <dependency>
       <groupId>com.azavea.geotrellis</groupId>
       <artifactId>geotrellis-shapefile_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
-    </dependency-->
+    </dependency>
 
     <!--dependency>
       <groupId>com.azavea.geotrellis</groupId>
