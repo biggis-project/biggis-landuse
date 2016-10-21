@@ -14,6 +14,13 @@ import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjected
 import org.apache.spark.{SparkConf, SparkContext}
 
 
+/**
+  * Within this example:
+  * - Geotiff raster file is opened using Spark RDD
+  * - the raster is reprojected to WebMercator
+  * - the raster is tiled into a grid
+  * - all tiles are stored as a layer in geotrellis catalog
+  */
 object GeotiffTilingExample extends LazyLogging {
 
   private val TILE_SIZE = 512
@@ -38,10 +45,14 @@ object GeotiffTilingExample extends LazyLogging {
 
     val sparkConf =
       new SparkConf()
-        .setMaster("local[*]")
         .setAppName("Spark Tiler")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
 
     implicit val sc = new SparkContext(sparkConf)
 
