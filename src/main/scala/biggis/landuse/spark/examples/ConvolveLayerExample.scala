@@ -1,5 +1,6 @@
 package biggis.landuse.spark.examples
 
+import geotrellis.raster.io.HistogramDoubleFormat
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.raster.mapalgebra.focal.Kernel
 import geotrellis.raster.{Tile, withTileMethods}
@@ -10,6 +11,9 @@ import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext, SparkException}
+import geotrellis.raster.withTileMethods
+import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
+import org.apache.hadoop.fs.Path
 
 object ConvolveLayerExample extends LazyLogging {
 
@@ -33,16 +37,12 @@ object ConvolveLayerExample extends LazyLogging {
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
 
-    // We also need to set the spark master.
-    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
-    // we can use the JVM parameter: -Dspark.master=local[*]
-    // sparkConf.setMaster("local[*]")
-
     implicit val sc = new SparkContext(sparkConf)
 
     // Create the attributes store that will tell us information about our catalog.
-    val attributeStore = FileAttributeStore(catalogPath)
-    val layerReader = FileLayerReader(attributeStore)
+    val catalogPathHdfs = new Path(catalogPath)
+    val attributeStore = HadoopAttributeStore( catalogPathHdfs )
+    val layerReader = HadoopLayerReader(attributeStore)
 
     val zoomsOfLayer = attributeStore.layerIds filter (_.name == layerName)
     if (zoomsOfLayer.isEmpty) {
@@ -62,23 +62,27 @@ object ConvolveLayerExample extends LazyLogging {
     val convolvedLayerRdd = queryResult.withContext { rdd =>
       rdd
         .bufferTiles(circleKernelRadius)
-        .mapValues {
-          _.tile.focalMean(focalKernel)
+        .mapValues { v =>
+          v.tile.focalMean(focalKernel)
         }
     }
 
     // this will be the new convoluted layer
-    val convolvedLayerId = LayerId(srcLayerId.name + "_zscore", srcLayerId.zoom)
+    val convolvedLayerId = LayerId(srcLayerId.name + "_conv", srcLayerId.zoom)
 
     // automatically deleting existing layer
     if (attributeStore.layerExists(convolvedLayerId)) {
-      new FileLayerManager(attributeStore).delete(convolvedLayerId)
+      logger debug s"Layer $convolvedLayerId already exists, deleting ..."
+      HadoopLayerDeleter(attributeStore).delete(convolvedLayerId)
     }
 
-    val writer = FileLayerWriter(attributeStore)
+    logger info s"Writing convoluted layer '${convolvedLayerId}'"
+    val writer =  HadoopLayerWriter(catalogPathHdfs, attributeStore)
     writer.write(convolvedLayerId, convolvedLayerRdd, ZCurveKeyIndexMethod)
 
-    logger info s"Layer '${convolvedLayerId}' created in catalog '$catalogPath'"
+    logger debug "Writing attribute 'histogramData' for zoom=0"
+    writer.attributeStore.write(
+      LayerId(convolvedLayerId.name, 0), "histogramData", convolvedLayerRdd.histogram)
 
     sc.stop()
     logger debug "Spark context stopped"
