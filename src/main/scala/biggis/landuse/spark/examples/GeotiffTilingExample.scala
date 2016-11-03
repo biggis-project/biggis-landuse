@@ -2,15 +2,16 @@ package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.proj4.WebMercator
+import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
 import geotrellis.raster.withTileMethods
-import geotrellis.spark.io.file.{FileAttributeStore, FileLayerManager, FileLayerWriter}
-import geotrellis.spark.io.hadoop.HadoopSparkContextMethodsWrapper
+import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerWriter, HadoopSparkContextMethodsWrapper}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
 import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 
@@ -72,23 +73,28 @@ object GeotiffTilingExample extends LazyLogging {
       TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, RESAMPLING_METHOD)
 
     // Create the attributes store that will tell us information about our catalog.
-    val attributeStore = FileAttributeStore(catalogPath)
+    val catalogPathHdfs = new Path(catalogPath)
+    val attributeStore = HadoopAttributeStore( catalogPathHdfs )
 
     // Create the writer that we will use to store the tiles in the local catalog.
-    val writer = FileLayerWriter(attributeStore)
+    val writer =  HadoopLayerWriter(catalogPathHdfs, attributeStore)
     val layerId = LayerId(layerName, zoom)
 
     // If the layer exists already, delete it out before writing
     if (attributeStore.layerExists(layerId)) {
-      new FileLayerManager(attributeStore).delete(layerId)
+      logger debug s"Layer $layerId already exists, deleting ..."
+      HadoopLayerDeleter(attributeStore).delete(layerId)
     }
 
     logger debug "Writing reprojected tiles using space filling curve"
     writer.write(layerId, reprojected, ZCurveKeyIndexMethod)
 
+    logger debug "Writing attribute 'histogramData' for zoom=0"
+    writer.attributeStore.write(
+      LayerId(layerName, 0), "histogramData", reprojected.histogram)
+
     sc.stop()
     logger debug "Spark context stopped"
-
     logger info "done."
   }
 }
