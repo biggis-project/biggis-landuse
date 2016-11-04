@@ -3,7 +3,7 @@ package biggis.landuse.spark.examples
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 /**
   * Created by Viliam Simko on 10/4/16.
@@ -16,6 +16,7 @@ object DeleteLayer extends LazyLogging {
       DeleteLayer(layerName)(catalogPath)
     } catch {
       case _: MatchError => println("Run as: /path/to/catalog layerName")
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
@@ -28,7 +29,7 @@ object DeleteLayer extends LazyLogging {
     val attributeStore = HadoopAttributeStore(hdfsPath)
 
     val deleter = HadoopLayerDeleter(attributeStore)
-    attributeStore.layerIds.filter(_.name == layerName).foreach(deleter.delete)
+    attributeStore.layerIds filter (_.name == layerName) foreach { deleter.delete }
 
     logger info "done"
   }
