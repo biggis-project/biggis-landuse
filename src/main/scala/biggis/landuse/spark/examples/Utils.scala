@@ -17,7 +17,7 @@ object Utils extends LazyLogging {
   val RDD_PARTITIONS = 32
   val RESAMPLING_METHOD = Bilinear
 
-  def initSparkContext(): SparkContext = {
+  def initSparkContext: SparkContext = {
     val sparkConf = new SparkConf()
       .setAppName("Geotrellis Example")
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")

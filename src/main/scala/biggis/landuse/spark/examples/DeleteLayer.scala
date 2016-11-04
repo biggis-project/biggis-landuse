@@ -23,13 +23,14 @@ object DeleteLayer extends LazyLogging {
   def apply(layerName: String)(implicit catalogPath: String): Unit = {
     logger info s"Deleting layer $layerName including all zoom levels in catalog $catalogPath ..."
 
-    implicit val sc = Utils.initSparkContext()
+    implicit val sc = Utils.initSparkContext
 
     val hdfsPath = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(hdfsPath)
 
     val deleter = HadoopLayerDeleter(attributeStore)
     attributeStore.layerIds filter (_.name == layerName) foreach { deleter.delete }
+    // TODO: also remove the empty directory "layerName"
 
     logger info "done"
   }

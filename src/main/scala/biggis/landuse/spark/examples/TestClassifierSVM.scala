@@ -27,7 +27,7 @@ object TestClassifierSVM extends StrictLogging {
     logger info s"(SVM) Classifying layer $trainingName in $modelPath ..."
     //ClassifierSVM
 
-    implicit val sc = Utils.initSparkContext()
+    implicit val sc = Utils.initSparkContext
 
     // Load training data in LIBSVM format.
     val data = MLUtils.loadLibSVMFile(sc, trainingName)

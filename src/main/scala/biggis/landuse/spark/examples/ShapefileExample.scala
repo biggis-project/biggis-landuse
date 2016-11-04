@@ -24,7 +24,7 @@ object ShapefileExample extends LazyLogging {
   def apply(shapeName: String)(implicit catalogPath: String): Unit = {
     logger info s"Running Shapefile import '$shapeName' in catalog '$catalogPath'"
 
-    implicit val sc = Utils.initSparkContext()
+    implicit val sc = Utils.initSparkContext
 
     val shp = ShapeFileReader.readSimpleFeatures(shapeName)
     for(ft <- shp) yield{

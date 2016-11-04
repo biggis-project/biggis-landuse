@@ -29,7 +29,7 @@ object ConvolveLayerExample extends LazyLogging {
     logger info s"Running convolution of layer '$layerName' in catalog '$catalogPath'"
     logger info s"Using circular kernel of radius $circleKernelRadius"
 
-    implicit val sc = Utils.initSparkContext()
+    implicit val sc = Utils.initSparkContext
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)

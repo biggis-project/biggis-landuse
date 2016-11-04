@@ -39,7 +39,7 @@ object ServeLayerAsMap extends LazyLogging {
 
       layerNameServed = layerName // TODO
 
-      implicit val sc = Utils.initSparkContext()
+      implicit val sc = Utils.initSparkContext
 
       // catalog reader
       fileValueReader = HadoopValueReader(new Path(catalogPath))

@@ -40,7 +40,7 @@ object GeotiffTilingExample extends LazyLogging {
 
     logger info s"Loading geotiff '$inputPath' into '$layerName' in catalog '$catalogPath' ... "
 
-    implicit val sc = Utils.initSparkContext()
+    implicit val sc = Utils.initSparkContext
 
     logger debug "Opening geotiff as RDD"
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)

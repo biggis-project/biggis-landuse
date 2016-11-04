@@ -30,7 +30,7 @@ object GeotiffToPyramid extends LazyLogging {
 
     logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
 
-    implicit val sc = Utils.initSparkContext()
+    implicit val sc = Utils.initSparkContext
 
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
     val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
@@ -64,7 +64,6 @@ object GeotiffToPyramid extends LazyLogging {
       writer.write(layerId, rdd, ZCurveKeyIndexMethod)
     }
 
-    // TODO: replace GeotiffToPyramid with LayerToPyramid
     Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
 
     sc.stop()
