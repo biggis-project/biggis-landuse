@@ -2,7 +2,6 @@ package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.proj4.WebMercator
-import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
 import geotrellis.raster.withTileMethods
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerWriter, HadoopSparkContextMethodsWrapper}
@@ -16,11 +15,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkException
 
 object GeotiffToPyramid extends LazyLogging {
-
-  private val TILE_SIZE = 512
-  private val RDD_PARTITIONS = 24
-  private val RESAMPLING_METHOD = Bilinear
-
 
   def main(args: Array[String]): Unit = {
     try {
@@ -39,15 +33,15 @@ object GeotiffToPyramid extends LazyLogging {
     implicit val sc = Utils.initSparkContext()
 
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
-    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(TILE_SIZE))
+    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
 
     val tiled = inputRdd
       .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, Bilinear)
-      .repartition(RDD_PARTITIONS)
+      .repartition(Utils.RDD_PARTITIONS)
 
-    val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = TILE_SIZE)
+    val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = Utils.TILE_SIZE)
     val (zoom, reprojected) = TileLayerRDD(tiled, myRasterMetaData)
-      .reproject(WebMercator, layoutScheme, RESAMPLING_METHOD)
+      .reproject(WebMercator, layoutScheme, Utils.RESAMPLING_METHOD)
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
@@ -60,7 +54,7 @@ object GeotiffToPyramid extends LazyLogging {
     Pyramid.upLevels(reprojected, layoutScheme, zoom) { (rdd, z) =>
       val layerId = LayerId(layerName, z)
 
-      // If the layer exists already, delete it out before writing
+      // If the layer exists already, delete it before writing
       if (attributeStore.layerExists(layerId)) {
         logger debug s"Layer $layerId already exists, deleting ..."
         HadoopLayerDeleter(attributeStore).delete(layerId)
@@ -71,12 +65,9 @@ object GeotiffToPyramid extends LazyLogging {
     }
 
     // TODO: replace GeotiffToPyramid with LayerToPyramid
-    logger debug "Writing attribute 'histogramData' for zoom=0"
-    writer.attributeStore.write(
-      LayerId(layerName, 0), "histogramData", reprojected.histogram)
+    Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
 
     sc.stop()
-    logger debug "Spark context stopped"
     logger debug s"Pyramid '$layerName' is ready in catalog '$catalogPath'"
   }
 

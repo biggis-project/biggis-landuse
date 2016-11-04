@@ -72,13 +72,9 @@ object ConvolveLayerExample extends LazyLogging {
     val writer =  HadoopLayerWriter(catalogPathHdfs, attributeStore)
     writer.write(convolvedLayerId, convolvedLayerRdd, ZCurveKeyIndexMethod)
 
-    logger debug "Writing attribute 'histogramData' for zoom=0"
-    writer.attributeStore.write(
-      LayerId(convolvedLayerId.name, 0), "histogramData", convolvedLayerRdd.histogram)
+    Utils.writeHistogram(attributeStore, layerName, convolvedLayerRdd.histogram)
 
     sc.stop()
-    logger debug "Spark context stopped"
-
     logger info "done."
   }
 }

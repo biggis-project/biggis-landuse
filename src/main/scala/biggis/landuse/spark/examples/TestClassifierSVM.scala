@@ -2,10 +2,10 @@ package biggis.landuse.spark.examples
 
 
 import com.typesafe.scalalogging.slf4j.StrictLogging
+import org.apache.spark.SparkException
 import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.util.MLUtils
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 object TestClassifierSVM extends StrictLogging {
   /**

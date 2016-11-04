@@ -2,32 +2,26 @@ package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.proj4.WebMercator
-import geotrellis.raster.io.HistogramDoubleFormat
-import geotrellis.raster.resample.Bilinear
 import geotrellis.raster.withTileMethods
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerWriter, HadoopSparkContextMethodsWrapper}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
-import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods,
-withTileRDDReprojectMethods, withTilerMethods}
+import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkException
 
 
 /**
   * Within this example:
-  * - Geotiff raster file is opened using Spark RDD
+  * - Geotiff raster file is opened as a Spark RDD
   * - the raster is reprojected to WebMercator
   * - the raster is tiled into a grid
   * - all tiles are stored as a layer in geotrellis catalog
+  * - histogram data are stored as an attribute in the catalog (into zoom level 0)
   */
 object GeotiffTilingExample extends LazyLogging {
-
-  private val TILE_SIZE = 512
-  private val RDD_PARTITIONS = 24
-  private val RESAMPLING_METHOD = Bilinear
 
   /**
     * Run as: /path/to/raster.tif some_layer /path/to/some/dir
@@ -50,17 +44,17 @@ object GeotiffTilingExample extends LazyLogging {
 
     logger debug "Opening geotiff as RDD"
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
-    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(TILE_SIZE))
+    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
 
     val tiled = inputRdd
-      .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, RESAMPLING_METHOD)
-      .repartition(RDD_PARTITIONS)
+      .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, Utils.RESAMPLING_METHOD)
+      .repartition(Utils.RDD_PARTITIONS)
 
-    val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = TILE_SIZE)
+    val layoutScheme = ZoomedLayoutScheme(WebMercator, tileSize = Utils.TILE_SIZE)
 
     logger debug "Reprojecting to WebMercator"
     val (zoom, reprojected) =
-      TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, RESAMPLING_METHOD)
+      TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, Utils.RESAMPLING_METHOD)
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
@@ -79,12 +73,9 @@ object GeotiffTilingExample extends LazyLogging {
     logger debug "Writing reprojected tiles using space filling curve"
     writer.write(layerId, reprojected, ZCurveKeyIndexMethod)
 
-    logger debug "Writing attribute 'histogramData' for zoom=0"
-    writer.attributeStore.write(
-      LayerId(layerName, 0), "histogramData", reprojected.histogram)
+    Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
 
     sc.stop()
-    logger debug "Spark context stopped"
     logger info "done."
   }
 }
