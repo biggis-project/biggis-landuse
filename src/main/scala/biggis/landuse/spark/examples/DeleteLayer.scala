@@ -22,18 +22,7 @@ object DeleteLayer extends LazyLogging {
   def apply(layerName: String)(implicit catalogPath: String): Unit = {
     logger info s"Deleting layer $layerName including all zoom levels in catalog $catalogPath ..."
 
-    val sparkConf =
-      new SparkConf()
-        .setAppName("Spark Tiler")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
-
-    // We also need to set the spark master.
-    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
-    // we can use the JVM parameter: -Dspark.master=local[*]
-    // sparkConf.setMaster("local[*]")
-
-    implicit val sc = new SparkContext(sparkConf)
+    implicit val sc = Utils.initSparkContext()
 
     val hdfsPath = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(hdfsPath)

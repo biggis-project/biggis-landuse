@@ -1,13 +1,9 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
-import geotrellis.shapefile.ShapeFileReader
-import geotrellis.vector._
-import geotrellis.raster._
-
-import scala.collection.JavaConverters._
 import com.vividsolutions.jts.{geom => jts}
+import geotrellis.shapefile.ShapeFileReader
+import org.apache.spark.SparkException
 
 /*
  * Needs additional dependencies from external repositories
@@ -28,18 +24,7 @@ object ShapefileExample extends LazyLogging {
   def apply(shapeName: String)(implicit catalogPath: String): Unit = {
     logger info s"Running Shapefile import '$shapeName' in catalog '$catalogPath'"
 
-    val sparkConf =
-      new SparkConf()
-        .setAppName("Geotrellis-based convolution of a layer using circular kernel")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
-
-    // We also need to set the spark master.
-    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
-    // we can use the JVM parameter: -Dspark.master=local[*]
-    // sparkConf.setMaster("local[*]")
-
-    implicit val sc = new SparkContext(sparkConf)
+    implicit val sc = Utils.initSparkContext()
 
     val shp = ShapeFileReader.readSimpleFeatures(shapeName)
     for(ft <- shp) yield{

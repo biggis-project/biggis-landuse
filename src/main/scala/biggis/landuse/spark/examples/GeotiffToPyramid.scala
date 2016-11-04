@@ -13,7 +13,7 @@ import geotrellis.spark.pyramid.Pyramid
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
 import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
+import org.apache.spark.SparkException
 
 object GeotiffToPyramid extends LazyLogging {
 
@@ -35,18 +35,8 @@ object GeotiffToPyramid extends LazyLogging {
   def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
 
     logger debug s"Building the pyramid '$layerName' from geotiff '$inputPath' ... "
-    val sparkConf =
-      new SparkConf()
-        .setAppName("Spark Tiler")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
 
-    // We also need to set the spark master.
-    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
-    // we can use the JVM parameter: -Dspark.master=local[*]
-    // sparkConf.setMaster("local[*]")
-
-    implicit val sc = new SparkContext(sparkConf)
+    implicit val sc = Utils.initSparkContext()
 
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
     val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(TILE_SIZE))

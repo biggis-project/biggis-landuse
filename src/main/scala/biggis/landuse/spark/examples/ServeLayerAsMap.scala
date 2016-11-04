@@ -1,18 +1,17 @@
 package biggis.landuse.spark.examples
 
-import geotrellis.raster.io.HistogramDoubleFormat
 import akka.actor._
 import akka.io.IO
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.render._
 import geotrellis.spark._
 import geotrellis.spark.io._
-import geotrellis.spark.io.file.FileValueReader
 import geotrellis.spark.io.hadoop.HadoopValueReader
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
+import org.apache.spark.SparkException
 import spray.can.Http
 import spray.http.MediaTypes
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
@@ -40,13 +39,7 @@ object ServeLayerAsMap extends LazyLogging {
 
       layerNameServed = layerName // TODO
 
-      val sparkConf =
-        new SparkConf()
-          .setAppName("Spark Tiler")
-          .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-          .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
-
-      implicit val sc = new SparkContext(sparkConf)
+      implicit val sc = Utils.initSparkContext()
 
       // catalog reader
       fileValueReader = HadoopValueReader(new Path(catalogPath))

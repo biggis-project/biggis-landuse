@@ -27,18 +27,7 @@ object TestClassifierSVM extends StrictLogging {
     logger info s"(SVM) Classifying layer $trainingName in $modelPath ..."
     //ClassifierSVM
 
-
-    val conf = new SparkConf()
-      .setAppName(s"TestClassifierSVM with $trainingName $modelPath")
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
-
-    // We also need to set the spark master.
-    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
-    // we can use the JVM parameter: -Dspark.master=local[*]
-    // sparkConf.setMaster("local[*]")
-
-    val sc = new SparkContext(conf)
+    implicit val sc = Utils.initSparkContext()
 
     // Load training data in LIBSVM format.
     val data = MLUtils.loadLibSVMFile(sc, trainingName)

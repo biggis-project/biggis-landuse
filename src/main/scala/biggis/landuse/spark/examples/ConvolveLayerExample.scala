@@ -1,19 +1,17 @@
 package biggis.landuse.spark.examples
 
-import geotrellis.raster.io.HistogramDoubleFormat
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.mapalgebra.focal.Kernel
 import geotrellis.raster.{Tile, withTileMethods}
-import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
-import geotrellis.spark.io.file.{FileAttributeStore, FileLayerManager, FileLayerReader, FileLayerWriter}
+import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
-import geotrellis.raster.withTileMethods
-import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
+import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
 import org.apache.hadoop.fs.Path
+import org.apache.spark.SparkException
+import org.apache.spark.rdd.RDD
 
 object ConvolveLayerExample extends LazyLogging {
 
@@ -31,13 +29,7 @@ object ConvolveLayerExample extends LazyLogging {
     logger info s"Running convolution of layer '$layerName' in catalog '$catalogPath'"
     logger info s"Using circular kernel of radius $circleKernelRadius"
 
-    val sparkConf =
-      new SparkConf()
-        .setAppName("Geotrellis-based convolution of a layer using circular kernel")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
-
-    implicit val sc = new SparkContext(sparkConf)
+    implicit val sc = Utils.initSparkContext()
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
