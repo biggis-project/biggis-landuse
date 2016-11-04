@@ -47,7 +47,7 @@ object ServeLayerAsMap extends LazyLogging {
       // read quantile breaks from attribute store
       val layerId = LayerId(layerName, 0)
       val hist = fileValueReader.attributeStore.read[Histogram[Double]](layerId, "histogramData")
-      colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(10))
+      colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(20))
 
       ServeLayerAsMap(catalogPath, layerName)
     } catch {
@@ -66,7 +66,7 @@ object ServeLayerAsMap extends LazyLogging {
     val service = system.actorOf(Props(classOf[ServeLayerAsMapActor]), "tile-server")
 
     // start a new HTTP server on port 8080 with our service actor as the handler
-    IO(Http) ! Http.Bind(service, "localhost", 8080)
+    IO(Http) ! Http.Bind(service, "localhost", 18080)
     println("Now open the file 'static/index.html' in your browser.")
     println("The HTML code uses leaflet javascript library which communicates with our tile-serving backend.")
   }
