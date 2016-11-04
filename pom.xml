@@ -35,6 +35,28 @@
     <spark.version>1.6.2</spark.version>
   </properties>
 
+  <!-- see: http://stackoverflow.com/questions/16225573/why-cant-i-resolve-the-dependencies-for-geotools-maven-quickstart -->
+  <repositories>
+    <repository>
+      <id>maven2-repository.dev.java.net</id>
+      <name>Java.net repository</name>
+      <url>http://download.java.net/maven/2</url>
+    </repository>
+    <repository>
+      <id>osgeo</id>
+      <name>Open Source Geospatial Foundation Repository</name>
+      <url>http://download.osgeo.org/webdav/geotools/</url>
+    </repository>
+    <repository> <!--Add the snapshot repository here-->
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>opengeo</id>
+      <name>OpenGeo Maven Repository</name>
+      <url>http://repo.opengeo.org</url>
+    </repository>
+  </repositories>
+
   <dependencies>
 
     <!-- ==== GEOTRELLIS ========================== -->
@@ -68,11 +90,11 @@
       <version>${geotrellis.version}</version>
     </dependency-->
 
-    <!--dependency>
+    <dependency>
       <groupId>com.azavea.geotrellis</groupId>
       <artifactId>geotrellis-vector_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
-    </dependency-->
+    </dependency>
 
     <dependency>
       <groupId>com.azavea.geotrellis</groupId>
@@ -80,11 +102,11 @@
       <version>${geotrellis.version}</version>
     </dependency>
 
-    <!--dependency>
+    <dependency>
       <groupId>com.azavea.geotrellis</groupId>
       <artifactId>geotrellis-proj4_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
-    </dependency-->
+    </dependency>
 
     <!--dependency>
       <groupId>com.azavea.geotrellis</groupId>
@@ -125,6 +147,14 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-mllib_${scala.compat.version}</artifactId>
       <version>${spark.version}</version>
+    </dependency>
+
+    <!-- ==== JTS Topology Suite ========================== -->
+
+    <dependency>
+      <groupId>com.vividsolutions</groupId>
+      <artifactId>jts</artifactId>
+      <version>1.13</version>
     </dependency>
 
     <!-- ==== Testing ========================== -->
