@@ -18,9 +18,9 @@ object UtilsSVM {
       .distinct()
       .stitch()
     val arrayLP : Array[LabeledPoint] = Array.ofDim[LabeledPoint](tile.rows * tile.cols)
-    for( y <- 0 until tile.rows-1; x <- 0 until tile.cols-1){
+    for( y <- 0 to tile.rows-1 by 1; x <- 0 to tile.cols-1 by 1){
       val bandbuffer = Array.fill(tile.bandCount)(0.0)  // Array[Double]
-      for(bandno <- 0 until tile.bandCount-1){
+      for(bandno <- 0 to tile.bandCount-1 by 1){
         bandbuffer(bandno) = tile.band(bandno).get(x,y)
       }
       val bandVector = Vectors.dense(bandbuffer)  // org.apache.spark.mllib.linalg.Vector
@@ -29,8 +29,7 @@ object UtilsSVM {
       arrayLP(y * tile.cols + x) = labeledPixel
     }
     val data_temp: RDD[LabeledPoint] = rdd.sparkContext
-      .parallelize(arrayLP)
-      .map(item=>LabeledPoint(item.label, item.features))
+      .parallelize(arrayLP.map(l => l))
     data_temp
   }
 
