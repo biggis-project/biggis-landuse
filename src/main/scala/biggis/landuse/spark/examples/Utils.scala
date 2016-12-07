@@ -19,9 +19,9 @@ object Utils extends LazyLogging {
 
   def initSparkContext: SparkContext = {
     val sparkConf = new SparkConf()
-      .setAppName("Geotrellis Example")
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+    sparkConf.setAppName("Geotrellis Example")
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    sparkConf.set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
 
     // We also need to set the spark master.
     // instead of  hardcoding it using spakrConf.setMaster("local[*]")
