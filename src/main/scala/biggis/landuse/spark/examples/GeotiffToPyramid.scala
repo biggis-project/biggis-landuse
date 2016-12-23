@@ -14,6 +14,10 @@ import geotrellis.spark.{LayerId, TileLayerMetadata, TileLayerRDD, withProjected
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkException
 
+/**
+  * This code is now redundant because we can use:
+  * GeotiffTilingExample + LayerToPyramid
+  */
 object GeotiffToPyramid extends LazyLogging {
 
   def main(args: Array[String]): Unit = {

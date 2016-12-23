@@ -5,19 +5,14 @@ import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
-/**
-  * Created by Viliam Simko on 10/4/16.
-  */
-object DeleteLayer extends LazyLogging {
+object DeleteLayer extends App with LazyLogging {
 
-  def main(args: Array[String]): Unit = {
-    try {
-      val Array(catalogPath, layerName) = args
-      DeleteLayer(layerName)(catalogPath)
-    } catch {
-      case _: MatchError => println("Run as: /path/to/catalog layerName")
-      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
-    }
+  try {
+    val Array(catalogPath, layerName) = args
+    DeleteLayer(layerName)(catalogPath)
+  } catch {
+    case _: MatchError => println("Run as: /path/to/catalog layerName")
+    case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
   }
 
   def apply(layerName: String)(implicit catalogPath: String): Unit = {

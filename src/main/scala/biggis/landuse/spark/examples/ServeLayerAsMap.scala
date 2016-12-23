@@ -31,6 +31,7 @@ object ServeLayerAsMap extends LazyLogging {
   // the reader is used from the akka actor class
   def reader(layerId: LayerId) = fileValueReader.reader[SpatialKey, Tile](layerId)
 
+  // DEBUG: val args = Array("target/geotrellis-catalog", "morning2")
   def main(args: Array[String]): Unit = {
     try {
       val Array(catalogPath, layerName) = args
@@ -47,7 +48,7 @@ object ServeLayerAsMap extends LazyLogging {
       // read quantile breaks from attribute store
       val layerId = LayerId(layerName, 0)
       val hist = fileValueReader.attributeStore.read[Histogram[Double]](layerId, "histogramData")
-      colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(20))
+      colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(10))
 
       ServeLayerAsMap(catalogPath, layerName)
     } catch {
@@ -86,7 +87,7 @@ class ServeLayerAsMapActor extends Actor with HttpService {
         complete {
           Future {
             try {
-              val tile = ServeLayerAsMap.reader(LayerId(ServeLayerAsMap.layerNameServed, zoom)).read(x, y)
+              val tile:Tile = ServeLayerAsMap.reader(LayerId(ServeLayerAsMap.layerNameServed, zoom)).read(x, y)
               val png = tile.renderPng(ServeLayerAsMap.colorMap)
               Some(png.bytes)
             } catch {
