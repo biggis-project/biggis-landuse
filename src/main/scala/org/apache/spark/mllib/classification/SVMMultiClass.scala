@@ -46,8 +46,8 @@ class SVMMultiClassOVAModel(classModels: Array[SVMModel]) extends Classification
 
   override def save(sc: SparkContext, path: String): Unit = {
     //GLMClassificationModel.SaveLoadV1_0(sc, path, this.getClass.getName,)
-    GLMClassificationMultiClassOVAModel.SaveLoadV1_0.save(sc, path, this.getClass.getName, classModelsWithIndex)
-    /*
+    //GLMClassificationMultiClassOVAModel.SaveLoadV1_0.save(sc, path, this.getClass.getName, classModelsWithIndex)
+    //*
     val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
     val file = hdfs.create(new org.apache.hadoop.fs.Path(path))
     val out = new ObjectOutputStream(file)
@@ -60,6 +60,7 @@ class SVMMultiClassOVAModel(classModels: Array[SVMModel]) extends Classification
 object SVMMultiClassOVAModel /*extends Loader[SVMMultiClassOVAModel]*/{
 
   def load(sc: SparkContext, path: String): SVMMultiClassOVAModel = {
+    /*
     val (loadedClassName, version, metadata) = Loader.loadMetadata(sc, path)
     val classNameV1_0 = "org.apache.spark.mllib.classification.SVMMultiClassOVAModel"
     (loadedClassName, version) match {
@@ -73,7 +74,8 @@ object SVMMultiClassOVAModel /*extends Loader[SVMMultiClassOVAModel]*/{
           s"($loadedClassName, $version).  Supported:\n" +
           s"  ($classNameV1_0, 1.0)")
     }
-    /*
+    // */
+    //*
     val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
     val file = hdfs.open(new org.apache.hadoop.fs.Path(path))
     val in = new ObjectInputStream(file)
