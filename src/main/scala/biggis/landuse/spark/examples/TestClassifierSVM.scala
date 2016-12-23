@@ -4,8 +4,11 @@ package biggis.landuse.spark.examples
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.apache.spark.SparkException
 import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics,MulticlassMetrics}
 import org.apache.spark.mllib.util.MLUtils
+
+//https://github.com/Bekbolatov/spark
+import org.apache.spark.mllib.classification.{SVMMultiClassOVAModel, SVMMultiClassOVAWithSGD}
 
 object TestClassifierSVM extends StrictLogging {
   /**
@@ -39,10 +42,11 @@ object TestClassifierSVM extends StrictLogging {
 
     // Run training algorithm to build the model
     val numIterations = 100
-    val model = SVMWithSGD.train(training, numIterations)
+    //val model = SVMWithSGD.train(training, numIterations)
+    val model = SVMMultiClassOVAWithSGD.train(training, numIterations)
 
     // Clear the default threshold.
-    model.clearThreshold()
+    //model.clearThreshold()
 
     // Compute raw scores on the test set.
     val scoreAndLabels = test.map { point =>
@@ -51,10 +55,15 @@ object TestClassifierSVM extends StrictLogging {
     }
 
     // Get evaluation metrics.
-    val metrics = new BinaryClassificationMetrics(scoreAndLabels)
-    val auROC = metrics.areaUnderROC()
+    //val metrics = new BinaryClassificationMetrics(scoreAndLabels)
+    //val auROC = metrics.areaUnderROC()
 
-    logger info "Area under ROC = " + auROC
+    //logger info "Area under ROC = " + auROC
+
+    val metrics = new MulticlassMetrics(scoreAndLabels)
+    val precision = metrics.precision
+
+    logger info "Precision = " + precision
 
     // If the model exists already, delete it before writing
     // http://stackoverflow.com/questions/27033823/how-to-overwrite-the-output-directory-in-spark
@@ -63,8 +72,8 @@ object TestClassifierSVM extends StrictLogging {
       try { hdfs.delete(new org.apache.hadoop.fs.Path(modelPath), true)} catch { case _ : Throwable =>  }
     }
     // Save and load model
-    model.save(sc, modelPath)
-    val sameModel = SVMModel.load(sc, modelPath)
+    //model.save(sc, modelPath)
+    //val sameModel = SVMModel.load(sc, modelPath)
 
     //ClassifierSVM
     logger info "done"
