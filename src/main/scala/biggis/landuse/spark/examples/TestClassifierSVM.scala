@@ -3,8 +3,8 @@ package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.apache.spark.SparkException
-import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
-import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics,MulticlassMetrics}
+import org.apache.spark.mllib.classification.{SVMModel, SVMMultiClassOVAModel, SVMWithSGD}
+import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
 import org.apache.spark.mllib.util.MLUtils
 
 //https://github.com/Bekbolatov/spark
@@ -72,8 +72,9 @@ object TestClassifierSVM extends StrictLogging {
       try { hdfs.delete(new org.apache.hadoop.fs.Path(modelPath), true)} catch { case _ : Throwable =>  }
     }
     // Save and load model
-    //model.save(sc, modelPath)
+    model.save(sc, modelPath)
     //val sameModel = SVMModel.load(sc, modelPath)
+    val sameModel = SVMMultiClassOVAModel.load(sc, modelPath)
 
     //ClassifierSVM
     logger info "done"
