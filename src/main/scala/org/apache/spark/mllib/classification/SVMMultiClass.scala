@@ -9,9 +9,12 @@ import org.apache.spark.mllib.util.{DataValidators, Loader, Saveable}
 
 import org.apache.spark.mllib.classification.impl.GLMClassificationMultiClassOVAModel
 
-class SVMMultiClassOVAModel(classModels: Array[SVMModel]) extends ClassificationModel with Serializable with Saveable {
+class SVMMultiClassOVAModel(classModels: Array[SVMModel], classIndices : Array[Int] = Array.empty) extends ClassificationModel with Serializable with Saveable {
 
-  val classModelsWithIndex : Array[(SVMModel, Int)] = classModels.zipWithIndex
+  private def zipIndices(classModels: Array[SVMModel])(classIndices : Array[Int]): Array[(SVMModel, Int)] = {
+    if(classIndices.nonEmpty) classModels.zip(classIndices) else classModels.zipWithIndex
+  }
+  val classModelsWithIndex : Array[(SVMModel, Int)] = zipIndices(classModels)(classIndices)
 
   /**
    * Predict values for the given data set using the model trained.
@@ -45,49 +48,27 @@ class SVMMultiClassOVAModel(classModels: Array[SVMModel]) extends Classification
   override protected def formatVersion: String = "1.0"
 
   override def save(sc: SparkContext, path: String): Unit = {
-    //GLMClassificationModel.SaveLoadV1_0(sc, path, this.getClass.getName,)
     GLMClassificationMultiClassOVAModel.SaveLoadV1_0.save(sc, path, this.getClass.getName, classModelsWithIndex)
-    /*
-    val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
-    val file = hdfs.create(new org.apache.hadoop.fs.Path(path))
-    val out = new ObjectOutputStream(file)
-    out.writeObject(classModelsWithIndex)
-    file.close()
-    // */
   }
 }
 
 object SVMMultiClassOVAModel /*extends Loader[SVMMultiClassOVAModel]*/{
 
   def load(sc: SparkContext, path: String): SVMMultiClassOVAModel = {
-    //*
     val (loadedClassName, version, metadata) = Loader.loadMetadata(sc, path)
     val classNameV1_0 = "org.apache.spark.mllib.classification.SVMMultiClassOVAModel"
     (loadedClassName, version) match {
       case (className, "1.0") if className == classNameV1_0 =>
         val data = GLMClassificationMultiClassOVAModel.SaveLoadV1_0.loadData(sc, path, this.getClass.getName)
         val dataModels = data.classModelsWithIndex.map( item => item._1 )
-        val model = new SVMMultiClassOVAModel(dataModels)
+        val dataIndices = data.classModelsWithIndex.map( item => item._2 )
+        val model = new SVMMultiClassOVAModel(dataModels, dataIndices)
         model
       case _ => throw new Exception(
         s"SVMMultiClassOVAModel.load did not recognize model with (className, format version):" +
           s"($loadedClassName, $version).  Supported:\n" +
           s"  ($classNameV1_0, 1.0)")
     }
-    // */
-    /*
-    val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
-    val file = hdfs.open(new org.apache.hadoop.fs.Path(path))
-    val in = new ObjectInputStream(file)
-    val input = in.readObject()
-    file.close()
-    val localClassModelsWithIndex : Array[(SVMModel, Int)] = input.asInstanceOf[Array[(SVMModel, Int)]]
-    //val localClassModels : Array[SVMModel] = input.asInstanceOf[Array[SVMModel]]
-    val localClassModels : Array[SVMModel] = localClassModelsWithIndex.map( item => item._1 )
-    //classModelsWithIndex = localClassModelsWithIndex
-    val model = new SVMMultiClassOVAModel(localClassModels)
-    model
-    // */
   }
 }
 
