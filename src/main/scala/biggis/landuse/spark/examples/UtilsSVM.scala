@@ -12,6 +12,23 @@ import org.apache.spark.rdd.RDD
   */
 object UtilsSVM {
   case class LabelPointSpatialRef(spatialKey: SpatialKey, offset: Int)
+  def MultibandTile2LabelPoint(tile : MultibandTile, spatialKey : SpatialKey): Array[(LabeledPoint,LabelPointSpatialRef)] = {
+    val arrayLP: Array[(LabeledPoint, LabelPointSpatialRef)] = Array.ofDim[(LabeledPoint, LabelPointSpatialRef)](tile.rows * tile.cols)
+    for (y <- 0 until tile.rows; x <- 0 until tile.cols) {
+      val bandbuffer = Array.fill(tile.bandCount)(0.0) // Array[Double]
+      for (bandno <- 0 until tile.bandCount) {
+        bandbuffer(bandno) = tile.band(bandno).get(x, y)
+      }
+      val bandVector = Vectors.dense(bandbuffer)
+      // org.apache.spark.mllib.linalg.Vector
+      val classid: Double = 0.0
+      // ToDo: Apply class id here
+      val labeledPixel = LabeledPoint(classid, bandVector.compressed)
+      val offset = y * tile.cols + x
+      arrayLP(offset) = (labeledPixel, LabelPointSpatialRef(spatialKey, offset))
+    }
+    arrayLP
+  }
   def MultibandTile2LabelPoint (rdd : RDD[(SpatialKey, MultibandTile)]): (RDD[LabeledPoint], RDD[LabelPointSpatialRef]) = {
     // ToDo: Select only pixels within training data
     val tiles = rdd
@@ -22,18 +39,7 @@ object UtilsSVM {
     for(tileno <- tiles.indices){
       val spatialKey : SpatialKey = tiles(tileno)._1
       val tile: MultibandTile = tiles(tileno)._2
-      val arrayLP : Array[(LabeledPoint,LabelPointSpatialRef)] = Array.ofDim[(LabeledPoint,LabelPointSpatialRef)](tile.rows * tile.cols)
-      for( y <- 0 until tile.rows; x <- 0 until tile.cols){
-        val bandbuffer = Array.fill(tile.bandCount)(0.0)  // Array[Double]
-        for(bandno <- 0 until tile.bandCount){
-          bandbuffer(bandno) = tile.band(bandno).get(x,y)
-        }
-        val bandVector = Vectors.dense(bandbuffer)  // org.apache.spark.mllib.linalg.Vector
-        val classid : Double = 0.0  // ToDo: Apply class id here
-        val labeledPixel = LabeledPoint(classid,bandVector.compressed)
-        val offset = y * tile.cols + x
-        arrayLP(offset) = (labeledPixel, LabelPointSpatialRef(spatialKey, offset))
-      }
+      val arrayLP : Array[(LabeledPoint,LabelPointSpatialRef)] = MultibandTile2LabelPoint(tile, spatialKey)
       arrayLPbuffer(tileno) = arrayLP
     }
     val data_temp_with_spatialref: RDD[(LabeledPoint,LabelPointSpatialRef)] = rdd.sparkContext
