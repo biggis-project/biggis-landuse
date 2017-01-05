@@ -12,7 +12,8 @@ import org.apache.spark.rdd.RDD
   */
 object UtilsSVM {
   case class LabelPointSpatialRef(spatialKey: SpatialKey, offset: Int)
-  def MultibandTile2LabelPoint(tile : MultibandTile, spatialKey : SpatialKey): Array[(LabeledPoint,LabelPointSpatialRef)] = {
+  def MultibandTile2LabelPoint( data : (SpatialKey, MultibandTile)): Array[(LabeledPoint,LabelPointSpatialRef)] = {
+    val (spatialKey, tile) = data
     val arrayLP: Array[(LabeledPoint, LabelPointSpatialRef)] = Array.ofDim[(LabeledPoint, LabelPointSpatialRef)](tile.rows * tile.cols)
     for (y <- 0 until tile.rows; x <- 0 until tile.cols) {
       val bandbuffer = Array.fill(tile.bandCount)(0.0) // Array[Double]
@@ -31,22 +32,9 @@ object UtilsSVM {
   }
   def MultibandTile2LabelPoint (rdd : RDD[(SpatialKey, MultibandTile)]): (RDD[LabeledPoint], RDD[LabelPointSpatialRef]) = {
     // ToDo: Select only pixels within training data
-    val tiles = rdd
-      .distinct()
-      .collect()
-    // ToDo: Avoid using Array as Buffer, map directly using .collect.foreach() ?!
-    val arrayLPbuffer : Array[Array[(LabeledPoint,LabelPointSpatialRef)]] = Array.ofDim[(LabeledPoint, LabelPointSpatialRef)]( tiles.length, tiles.array(0)._2.rows * tiles.array(0)._2.cols)
-    for(tileno <- tiles.indices){
-      val spatialKey : SpatialKey = tiles(tileno)._1
-      val tile: MultibandTile = tiles(tileno)._2
-      val arrayLP : Array[(LabeledPoint,LabelPointSpatialRef)] = MultibandTile2LabelPoint(tile, spatialKey)
-      arrayLPbuffer(tileno) = arrayLP
-    }
-    val data_temp_with_spatialref: RDD[(LabeledPoint,LabelPointSpatialRef)] = rdd.sparkContext
-      .parallelize( arrayLPbuffer
-        .flatMap( tile => tile
-          .filter( _._1.features.numNonzeros > 0 )
-          .map( l => ( l._1, LabelPointSpatialRef(l._2.spatialKey, l._2.offset)) ) ) )
+    val data_temp_with_spatialref: RDD[(LabeledPoint,LabelPointSpatialRef)] = rdd
+      .flatMap( tile => MultibandTile2LabelPoint(tile))
+      .filter(_._1.features.numNonzeros > 0)
     val data_temp : RDD[LabeledPoint] = data_temp_with_spatialref
       .map( item => item._1 )
     val spatialref : RDD[LabelPointSpatialRef] = data_temp_with_spatialref
