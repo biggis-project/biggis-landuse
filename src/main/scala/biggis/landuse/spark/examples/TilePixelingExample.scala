@@ -1,10 +1,11 @@
 package biggis.landuse.spark.examples
 
+import biggis.landuse.spark.examples.ManySingleBandLayersToMultibandLayer.logger
 import biggis.landuse.spark.examples.UtilsSVM.LabelPointSpatialRef
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.mapalgebra.focal.Kernel
-import geotrellis.raster.{MultibandTile, Tile, withTileMethods}
+import geotrellis.raster.{DoubleArrayTile, MultibandTile, Tile, withTileMethods}
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
@@ -16,6 +17,8 @@ import org.apache.spark.mllib.feature.Normalizer
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.RDD._
+import org.apache.spark.rdd._
 
 object TilePixelingExample extends LazyLogging {
 
@@ -36,7 +39,7 @@ object TilePixelingExample extends LazyLogging {
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
-    val attributeStore = HadoopAttributeStore( catalogPathHdfs )
+    val attributeStore = HadoopAttributeStore(catalogPathHdfs)
     val layerReader = HadoopLayerReader(attributeStore)
 
     val zoomsOfLayer = attributeStore.layerIds filter (_.name == layerName)
@@ -56,11 +59,11 @@ object TilePixelingExample extends LazyLogging {
       .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](srcLayerId)
 
     // TODO: adjust this code to produce stream of pixels from each tile (flatmap)
-//    val convolvedLayerRdd = queryResult
-//        .flatMapValues { v =>
-//          // TODO: convert tile to pixels here
-//        }
-//    }
+    //    val convolvedLayerRdd = queryResult
+    //        .flatMapValues { v =>
+    //          // TODO: convert tile to pixels here
+    //        }
+    //    }
 
     // Note: expecially for MLLib SVM we could also use LabeledPoint format (but needs to be generalized for other cases):
     //val (data, data_spatialref) = UtilsSVM.MultibandTile2LabelPoint(queryResult)
@@ -69,11 +72,53 @@ object TilePixelingExample extends LazyLogging {
     //UtilsSVM.SaveAsLibSVMFile(data_norm, "data/normalized_training_data.csv")
 
     // Test using LabelPoint.features (equals org.apache.spark.mllib.linalg.Vector)
-    val pixelRdd : RDD[(SpatialKey, Int, org.apache.spark.mllib.linalg.Vector)] = queryResult
-      .flatMap( tile => UtilsSVM.MultibandTile2LabelPoint(tile._1, tile._2)
-          .map( item => (item._2.spatialKey, item._2.offset, item._1.features)))
+    //    val pixelRdd = queryResult
+    //      .flatMap { tile =>
+    //        val labeledPoints = UtilsSVM.MultibandTile2LabelPointWithClassNo(tile, 0)
+    //        labeledPoints.map { case(labeledPoint, ref) =>
+    //          (ref.spatialKey, ref.offset, labeledPoint.features)
+    //        }
+    //      }
+    //
+    //    implicit val myOrdering = new Ordering[(SpatialKey, Int, org.apache.spark.mllib.linalg.Vector)] {
+    //      override def compare(a: (SpatialKey, Int, org.apache.spark.mllib.linalg.Vector), b: (SpatialKey, Int, org.apache.spark.mllib.linalg.Vector)) =
+    //        0
+    //    }
+    //    pixelRdd.top(10).foreach{ case(key, offset, vector) =>
+    //        println(s"$key $offset : $vector")
+    //    }
 
-    // TODO: write the stram of pixels into a huge file
+    val samples: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] =
+      queryResult.withContext { rdd =>
+        rdd.flatMapValues(mbtile =>
+          UtilsSVM.MultibandTile2LabeledPixelSamples(mbtile, classBandNo = 0)
+        )
+      }
+
+    val outTiles: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+      samples.withContext { rdd =>
+        rdd.groupByKey().map { case (spatialKey, listOfPixels) =>
+          val arr = Array.ofDim[Double](256 * 256)
+          listOfPixels.foreach { case (x, y, lp) =>
+            arr(x + y * 256) = lp.label
+          }
+
+          (spatialKey, DoubleArrayTile(arr, 256, 256))
+        }
+      }
+
+    // Create the writer that we will use to store the tiles in the local catalog.
+    val writer = HadoopLayerWriter(catalogPathHdfs, attributeStore)
+    val layerIdOut = LayerId("TODO_outlayer", srcLayerId.zoom )// TODO:srcLayerId.zoom
+
+    // If the layer exists already, delete it out before writing
+    if (attributeStore.layerExists(layerIdOut)) {
+      logger debug s"Layer $layerIdOut already exists, deleting ..."
+      HadoopLayerDeleter(attributeStore).delete(layerIdOut)
+    }
+
+    logger debug "Writing reprojected tiles using space filling curve"
+    writer.write(layerIdOut, outTiles, ZCurveKeyIndexMethod)
 
     sc.stop()
     logger info "done."
