@@ -17,6 +17,17 @@ object Utils extends LazyLogging {
   val RDD_PARTITIONS = 32
   val RESAMPLING_METHOD = Bilinear
 
+  @deprecated("do not use, only for dirty debugging")
+  def initLocalSparkContext: SparkContext = {
+    val sparkConf = new SparkConf()
+    sparkConf.setAppName("Geotrellis Example")
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    sparkConf.set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+    sparkConf.setMaster("local[*]")
+
+    return new SparkContext(sparkConf)
+  }
+
   def initSparkContext: SparkContext = {
     val sparkConf = new SparkConf()
     sparkConf.setAppName("Geotrellis Example")
@@ -24,7 +35,7 @@ object Utils extends LazyLogging {
     sparkConf.set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
 
     // We also need to set the spark master.
-    // instead of  hardcoding it using spakrConf.setMaster("local[*]")
+    // instead of  hardcoding it using sparkConf.setMaster("local[*]")
     // we can use the JVM parameter: -Dspark.master=local[*]
     // sparkConf.setMaster("local[*]")
 
