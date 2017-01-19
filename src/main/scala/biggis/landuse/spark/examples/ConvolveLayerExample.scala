@@ -72,7 +72,7 @@ object ConvolveLayerExample extends LazyLogging {
     val writer =  HadoopLayerWriter(catalogPathHdfs, attributeStore)
     writer.write(convolvedLayerId, convolvedLayerRdd, ZCurveKeyIndexMethod)
 
-    Utils.writeHistogram(attributeStore, layerName, convolvedLayerRdd.histogram)
+    Utils.writeHistogram(attributeStore, srcLayerId.name + "_conv", convolvedLayerRdd.histogram)
 
     sc.stop()
     logger info "done."
