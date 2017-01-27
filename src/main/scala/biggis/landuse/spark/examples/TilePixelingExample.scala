@@ -91,7 +91,7 @@ object TilePixelingExample extends LazyLogging {
     val samples: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] =
       queryResult.withContext { rdd =>
         rdd.flatMapValues(mbtile =>
-          UtilsSVM.MultibandTile2LabeledPixelSamples(mbtile, classBandNo = 0)
+          UtilsML.MultibandTile2LabeledPixelSamples(mbtile, classBandNo = 0)
         )
       }
 

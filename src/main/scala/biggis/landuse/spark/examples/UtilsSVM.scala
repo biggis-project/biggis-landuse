@@ -9,49 +9,15 @@ import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
 /**
-  * Created by ak on 01.12.2016.
+  * Renamed by ak on 26.01.2017.
   */
-object UtilsSVM {
+@deprecated("do not use, replace by UtilsML")
+object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
 
+  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
   case class LabelPointSpatialRef(spatialKey: SpatialKey, offset: Int)
 
-  def MultibandTile2PixelSamples(tile: MultibandTile): Iterable[(Int, Int, List[Double])] = {
-
-    val xy = for (x <- 0 until tile.cols;
-                  y <- 0 until tile.rows) yield (x, y)
-
-    xy.map { case (x, y) =>
-      val features = for (b <- 0 until tile.bandCount) yield tile.band(b).getDouble(x, y)
-      (x, y, features.toList)
-    }
-  }
-
-  def MultibandTile2LabeledPixelSamples(tile: MultibandTile,
-                                        classBandNo: Int): Iterable[(Int, Int, LabeledPoint)] = {
-
-    MultibandTile2PixelSamples(tile).map{case(x, y, features) =>
-      val label = features(classBandNo)
-      val featuresWithoutLabel = features.take(classBandNo - 1) ::: features.drop(classBandNo)
-      val featuresMllib = Vectors.dense(featuresWithoutLabel.toArray).compressed
-      (x,y, LabeledPoint(label, featuresMllib))
-    }
-//
-//    val xy = for (x <- 0 until tile.cols;
-//                  y <- 0 until tile.rows) yield (x, y)
-//
-//    val results = xy.map { case (x, y) =>
-//      val label = tile.band(classBandNo).getDouble(x, y)
-//      val features = for (b <- 0 until tile.bandCount if b != classBandNo) yield tile.band(b).getDouble(x, y)
-//      (x, y, label, features)
-//    }
-//
-//    // adjusting the output for MLLIB
-//    results.map { case (x, y, label, features) =>
-//      val featuresMllib = Vectors.dense(features.toArray).compressed
-//      (x, y, LabeledPoint(label, featuresMllib))
-//    }
-  }
-
+  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
   def MultibandTile2LabelPoint(data: (SpatialKey, MultibandTile)): Array[(LabeledPoint, LabelPointSpatialRef)] = {
 
     val (spatialKey, tile) = data
@@ -76,6 +42,7 @@ object UtilsSVM {
     arrayLP
   }
 
+  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
   def MultibandTile2LabelPoint(rdd: RDD[(SpatialKey, MultibandTile)]): (RDD[LabeledPoint], RDD[LabelPointSpatialRef]) = {
     // ToDo: Select only pixels within training data
     val data_temp_with_spatialref: RDD[(LabeledPoint, LabelPointSpatialRef)] = rdd
@@ -88,6 +55,7 @@ object UtilsSVM {
     (data_temp, spatialref)
   }
 
+  @deprecated("do not use, replace by UtilsML.SaveAsLibSVMFile")
   def SaveAsLibSVMFile(data: (RDD[LabeledPoint], RDD[LabelPointSpatialRef]), trainingName: String): Unit = {
     try {
       val hdfs = org.apache.hadoop.fs.FileSystem.get(data._1.sparkContext.hadoopConfiguration)
@@ -105,20 +73,4 @@ object UtilsSVM {
     }
   }
 
-  def SaveAsLibSVMFile(data: RDD[LabeledPoint], trainingName: String): Unit = {
-    try {
-      val hdfs = org.apache.hadoop.fs.FileSystem.get(data.sparkContext.hadoopConfiguration)
-      if (hdfs.exists(new org.apache.hadoop.fs.Path(trainingName))) {
-        try {
-          hdfs.delete(new org.apache.hadoop.fs.Path(trainingName), true)
-        } catch {
-          case _: Throwable =>
-        }
-      }
-      MLUtils.saveAsLibSVMFile(data, trainingName)
-    }
-    catch {
-      case _: Throwable =>
-    }
-  }
 }
