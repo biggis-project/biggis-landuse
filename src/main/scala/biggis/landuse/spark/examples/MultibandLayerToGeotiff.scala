@@ -24,16 +24,17 @@ object MultibandLayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {
       val Array(layerName, outputPath, catalogPath) = args
-      MultibandLayerToGeotiff(layerName, outputPath)(catalogPath)
+      implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
+      MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc)
     } catch {
       case _: MatchError => println("Run as: layerName outputPath /path/to/catalog")
     }
   }
 
-  def apply(layerName: String, outputPath: String)(implicit catalogPath: String): Unit = {
+  def apply(layerName: String, outputPath: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Writing layer '$layerName' in catalog '$catalogPath' to '$outputPath'"
 
-    implicit val sc = Utils.initSparkContext
+    //implicit val sc = Utils.initSparkContext
 
     val catalogPathHdfs = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(catalogPathHdfs)

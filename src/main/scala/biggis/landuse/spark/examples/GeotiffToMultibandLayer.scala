@@ -8,7 +8,7 @@ import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMet
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
 import geotrellis.spark.{LayerId, MultibandTileLayerRDD, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.SparkException
+import org.apache.spark.{SparkContext, SparkException}
 
 
 /**
@@ -27,18 +27,19 @@ object GeotiffToMultibandLayer extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(inputPath, layerName, catalogPath) = args
-      GeotiffToMultibandLayer(inputPath, layerName)(catalogPath)
+      implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
+      GeotiffToMultibandLayer(inputPath, layerName)(catalogPath, sc)
     } catch {
       case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
-  def apply(inputPath: String, layerName: String)(implicit catalogPath: String) {
+  def apply(inputPath: String, layerName: String)(implicit catalogPath: String, sc: SparkContext) {
 
     logger info s"Loading geotiff '$inputPath' into '$layerName' in catalog '$catalogPath' ... "
 
-    implicit val sc = Utils.initSparkContext
+    //implicit val sc = Utils.initSparkContext
 
     logger debug "Opening geotiff as RDD"
     val inputRdd = sc.hadoopMultibandGeoTiffRDD(inputPath)
