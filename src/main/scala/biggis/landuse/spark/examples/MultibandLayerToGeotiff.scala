@@ -12,11 +12,14 @@ import geotrellis.raster.{io => _, _}
 import geotrellis.raster.io.geotiff.{MultibandGeoTiff, _}
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerReader}
 import geotrellis.spark.stitch._
+import geotrellis.spark.tiling.FloatingLayoutScheme
 import geotrellis.spark.{io => _, _}
+import geotrellis.vector.Extent
 import org.apache.hadoop.fs.Path
 
 // https://github.com/geotrellis/geotrellis/blob/master/docs/spark/spark-examples.md
 
+@deprecated("for debugging only (attention: writes many tiles, not single file)")
 object MultibandLayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {
@@ -49,14 +52,38 @@ object MultibandLayerToGeotiff extends LazyLogging{
       .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](srcLayerId)
 
     val metadata = inputRdd.metadata
-
-    val tiled: RDD[(SpatialKey, MultibandTile)] = inputRdd.distinct()
-
-    val tile: MultibandTile = tiled.stitch()
-
     val crs = metadata.crs
-    //val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
-    MultibandGeoTiff(tile, metadata.extent, crs).write(outputPath)
+
+    // test re-tile
+    /*
+    val myTILE_SIZE = 1024 //256 //Utils.TILE_SIZE
+    val myRDD_PARTITIONS = 32 //32 //Utils.RDD_PARTITIONS
+    val myRESAMPLING_METHOD = geotrellis.raster.resample.NearestNeighbor //Bilinear //Utils.RESAMPLING_METHOD
+
+    val myMetadata = TileLayerMetadata(
+      metadata.cellType,
+      metadata.layout,
+      metadata.extent,
+      metadata.crs,
+      metadata.bounds)
+    */
+    val outputRdd:RDD[(SpatialKey, MultibandTile)] = inputRdd
+      //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
+      //.repartition(Utils.RDD_PARTITIONS)
+      //.repartition(myRDD_PARTITIONS)
+      //.tileToLayout(myMetadata.cellType, myMetadata.layout,  myRESAMPLING_METHOD)
+
+      outputRdd.foreach (mbtile => {
+        val (key, tile) = mbtile
+        val (col, row) = (key.col, key.row)
+        val tileextent: Extent = metadata.layout.mapTransform(key)
+      MultibandGeoTiff(tile, tileextent, crs)
+        .write(outputPath + "_" + col + "_" + row + ".tif")
+    }
+    )
+
+    ////val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
+    //MultibandGeoTiff(tile, metadata.extent, crs).write(outputPath)
 
     sc.stop()
     logger debug "Spark context stopped"
