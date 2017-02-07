@@ -26,6 +26,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
       val Array(layerName, outputPath, catalogPath) = args
       implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
       MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc)
+      sc.stop()
     } catch {
       case _: MatchError => println("Run as: layerName outputPath /path/to/catalog")
     }
@@ -86,7 +87,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
     ////val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
     //MultibandGeoTiff(tile, metadata.extent, crs).write(outputPath)
 
-    sc.stop()
+    //sc.stop()
     logger debug "Spark context stopped"
 
     logger info "done."

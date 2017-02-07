@@ -1,6 +1,7 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import geotrellis.proj4.WebMercator
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerWriter, HadoopSparkContextMethodsWrapper}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
@@ -14,6 +15,7 @@ import org.apache.spark.{SparkContext, SparkException}
 /**
   * Within this example:
   * - Geotiff raster file is opened as a Spark RDD
+  * - the raster is reprojected to WebMercator (optionally, otherwise use_original_crs)
   * - the raster is tiled into a grid
   * - all tiles are stored as a layer in geotrellis catalog
   * - histogram data are stored as an attribute in the catalog (into zoom level 0)
@@ -29,6 +31,7 @@ object GeotiffToMultibandLayer extends LazyLogging {
       val Array(inputPath, layerName, catalogPath) = args
       implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
       GeotiffToMultibandLayer(inputPath, layerName)(catalogPath, sc)
+      sc.stop()
     } catch {
       case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
@@ -51,11 +54,21 @@ object GeotiffToMultibandLayer extends LazyLogging {
       .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, myRESAMPLING_METHOD)
       .repartition(Utils.RDD_PARTITIONS)
 
-    val layoutScheme = ZoomedLayoutScheme(myRasterMetaData.crs, tileSize = Utils.TILE_SIZE)
+    val use_original_crs = true //false //
+
+    val crs = {
+      if(use_original_crs) myRasterMetaData.crs
+      else WebMercator
+    }
+
+    val layoutScheme = {
+      if(use_original_crs) FloatingLayoutScheme(tileSize = Utils.TILE_SIZE)
+      else ZoomedLayoutScheme(crs, tileSize = Utils.TILE_SIZE)
+    }
 
     //logger debug "Reprojecting to myRasterMetaData.crs"
     val (zoom, reprojected) =
-      MultibandTileLayerRDD(tiled, myRasterMetaData).reproject(myRasterMetaData.crs, layoutScheme, Utils.RESAMPLING_METHOD)
+      MultibandTileLayerRDD(tiled, myRasterMetaData).reproject(crs, layoutScheme, Utils.RESAMPLING_METHOD)
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
@@ -76,7 +89,7 @@ object GeotiffToMultibandLayer extends LazyLogging {
 
     //Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
 
-    sc.stop()
+    //sc.stop()
     logger info "done."
   }
 }
