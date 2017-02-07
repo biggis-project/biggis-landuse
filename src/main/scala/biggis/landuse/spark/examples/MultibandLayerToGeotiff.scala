@@ -12,7 +12,7 @@ import geotrellis.raster.{io => _, _}
 import geotrellis.raster.io.geotiff.{MultibandGeoTiff, _}
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerReader}
 import geotrellis.spark.stitch._
-import geotrellis.spark.tiling.FloatingLayoutScheme
+import geotrellis.spark.tiling.{FloatingLayoutScheme, LayoutDefinition, ZoomedLayoutScheme}
 import geotrellis.spark.{io => _, _}
 import geotrellis.vector.Extent
 import org.apache.hadoop.fs.Path
@@ -27,6 +27,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
       implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
       MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc)
       sc.stop()
+      logger debug "Spark context stopped"
     } catch {
       case _: MatchError => println("Run as: layerName outputPath /path/to/catalog")
     }
@@ -62,18 +63,26 @@ object MultibandLayerToGeotiff extends LazyLogging{
     val myRDD_PARTITIONS = 32 //32 //Utils.RDD_PARTITIONS
     val myRESAMPLING_METHOD = geotrellis.raster.resample.NearestNeighbor //Bilinear //Utils.RESAMPLING_METHOD
 
+    val layout = {
+      //val layoutScheme = FloatingLayoutScheme(tileSize = myTILE_SIZE)  // Utils.TILE_SIZE
+      //val layoutScheme = ZoomedLayoutScheme(crs, tileSize = myTILE_SIZE) // Utils.TILE_SIZE
+      val layoutTile = TileLayout(metadata.layout.layoutCols, metadata.layout.layoutRows, myTILE_SIZE, myTILE_SIZE )
+      LayoutDefinition(extent = metadata.extent, layoutTile)
+    }
+
     val myMetadata = TileLayerMetadata(
       metadata.cellType,
-      metadata.layout,
+      layout,   //metadata.layout,
       metadata.extent,
       metadata.crs,
       metadata.bounds)
-    */
+    // */
+
     val outputRdd:RDD[(SpatialKey, MultibandTile)] = inputRdd
       //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
       //.repartition(Utils.RDD_PARTITIONS)
       //.repartition(myRDD_PARTITIONS)
-      //.tileToLayout(myMetadata.cellType, myMetadata.layout,  myRESAMPLING_METHOD)
+      //.tileToLayout(myMetadata.cellType, myMetadata.layout, myRESAMPLING_METHOD)
 
       outputRdd.foreach (mbtile => {
         val (key, tile) = mbtile
@@ -88,7 +97,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
     //MultibandGeoTiff(tile, metadata.extent, crs).write(outputPath)
 
     //sc.stop()
-    logger debug "Spark context stopped"
+    //logger debug "Spark context stopped"
 
     logger info "done."
   }

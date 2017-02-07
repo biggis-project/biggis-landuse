@@ -32,6 +32,7 @@ object GeotiffToMultibandLayer extends LazyLogging {
       implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
       GeotiffToMultibandLayer(inputPath, layerName)(catalogPath, sc)
       sc.stop()
+      logger debug "Spark context stopped"
     } catch {
       case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
