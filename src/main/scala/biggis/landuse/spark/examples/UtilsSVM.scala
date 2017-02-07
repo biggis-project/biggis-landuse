@@ -2,7 +2,7 @@ package biggis.landuse.spark.examples
 
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.Tile
-import geotrellis.spark.{SpaceTimeKey, SpatialKey, TemporalKey}
+import geotrellis.spark.{Metadata, SpaceTimeKey, SpatialKey, TemporalKey, TileLayerMetadata}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
@@ -11,8 +11,23 @@ import org.apache.spark.rdd.RDD
 /**
   * Renamed by ak on 26.01.2017.
   */
-@deprecated("do not use, replace by UtilsML")
+@deprecated("do not use, except for debugging, replace by UtilsML")
 object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
+  case class BandNoLabel(classBandNo: Int)
+  def MultibandTile2xyLabeledPoint( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): RDD[(SpatialKey, (Int, Int, LabeledPoint))] = {
+    val samples: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] =
+      data.withContext { rdd =>
+        rdd.flatMapValues(mbtile =>
+          UtilsML.MultibandTile2LabeledPixelSamples(mbtile, classBandNo = classBandNo.classBandNo )
+        )
+      }
+    samples
+  }
+  def MultibandTile2LabeledPoint( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): RDD[LabeledPoint] = {
+    val samples = MultibandTile2xyLabeledPoint(data)
+    val lp = samples.map( sample => sample._2._3 )
+    lp
+  }
 
   @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
   case class LabelPointSpatialRef(spatialKey: SpatialKey, offset: Int)

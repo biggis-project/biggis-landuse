@@ -28,8 +28,8 @@ trait UtilsML{
                                         classBandNo: Int): Iterable[(Int, Int, LabeledPoint)] = {
 
     MultibandTile2PixelSamples(tile).map{case(x, y, features) =>
-      val label = features(classBandNo)
-      val featuresWithoutLabel = features.take(classBandNo - 1) ::: features.drop(classBandNo)
+      val label = if(classBandNo >= 0 ) features(classBandNo) else Double.NaN
+      val featuresWithoutLabel = features.take(classBandNo) ::: features.drop(classBandNo + 1)
       val featuresMllib = Vectors.dense(featuresWithoutLabel.toArray).compressed
       (x,y, LabeledPoint(label, featuresMllib))
     }
