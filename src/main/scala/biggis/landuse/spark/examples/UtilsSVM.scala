@@ -25,7 +25,9 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
   }
   def MultibandTile2LabeledPoint( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): RDD[LabeledPoint] = {
     val samples = MultibandTile2xyLabeledPoint(data)
-    val lp = samples.map( sample => sample._2._3 )
+    val lp = samples
+      .map( sample => sample._2._3 )
+      .filter(_.features.numNonzeros > 0)
     lp
   }
 
