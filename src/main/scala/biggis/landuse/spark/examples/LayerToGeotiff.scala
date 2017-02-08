@@ -20,17 +20,20 @@ import org.apache.hadoop.fs.Path
 object LayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {
+      implicit val sc = Utils.initSparkContext
       val Array(layerName, outputPath, catalogPath) = args
-      LayerToGeotiff(layerName, outputPath)(catalogPath)
+      LayerToGeotiff(layerName, outputPath)(catalogPath, sc)
+      sc.stop()
+      logger debug "Spark context stopped"
     } catch {
       case _: MatchError => println("Run as: layerName outputPath /path/to/catalog")
     }
   }
 
-  def apply(layerName: String, outputPath: String)(implicit catalogPath: String): Unit = {
+  def apply(layerName: String, outputPath: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Writing layer '$layerName' in catalog '$catalogPath' to '$outputPath'"
 
-    implicit val sc = Utils.initSparkContext
+    //implicit val sc = Utils.initSparkContext
 
     val catalogPathHdfs = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(catalogPathHdfs)
@@ -58,8 +61,8 @@ object LayerToGeotiff extends LazyLogging{
     val raster: Raster[Tile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
     GeoTiff(raster, crs).write(outputPath)
 
-    sc.stop()
-    logger debug "Spark context stopped"
+    //sc.stop()
+    //logger debug "Spark context stopped"
 
     logger info "done."
   }
