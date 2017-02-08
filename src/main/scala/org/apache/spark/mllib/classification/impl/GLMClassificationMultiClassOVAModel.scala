@@ -35,7 +35,7 @@ private[classification] object GLMClassificationMultiClassOVAModel {
       val dataPath = Loader.dataPath(path)
       val sqlContext = SQLContext.getOrCreate(sc)
       val dataRDD = sqlContext.read.parquet(dataPath)
-      val dataArray = dataRDD.select("classIndex").take(1)
+      val dataArray = dataRDD.select("classId").take(1)
       assert(dataArray.length == 1, s"Unable to load $modelClass data from: $dataPath")
       val data = dataArray(0)
       assert(data.size == 1, s"Unable to load $modelClass data from: $dataPath")

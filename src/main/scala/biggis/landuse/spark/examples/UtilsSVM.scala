@@ -3,10 +3,12 @@ package biggis.landuse.spark.examples
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.Tile
 import geotrellis.spark.{Metadata, SpaceTimeKey, SpatialKey, TemporalKey, TileLayerMetadata}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.classification.SVMMultiClassOVAModel
 
 /**
   * Renamed by ak on 26.01.2017.
@@ -29,6 +31,26 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
       .map( sample => sample._2._3 )
       .filter(_.features.numNonzeros > 0)
     lp
+  }
+
+  def SplitSamples( samples : RDD[LabeledPoint], factor : Double): (RDD[LabeledPoint], RDD[LabeledPoint]) = {
+    // Split data into training (60%) and test (40%).
+    val splits = samples.randomSplit(Array(factor, 1.0-factor), seed = 11L)
+    val training = splits(0).cache()
+    val test = splits(1)
+    (training,test)
+  }
+
+  def SaveSVMClassifier( model_multi : SVMMultiClassOVAModel, svmClassifier : String)(implicit sc : SparkContext): Unit ={
+    val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
+    if (hdfs.exists(new org.apache.hadoop.fs.Path(svmClassifier))) {
+      try {
+        hdfs.delete(new org.apache.hadoop.fs.Path(svmClassifier), true)
+      } catch {
+        case _: Throwable =>
+      }
+    }
+    model_multi.save(sc, svmClassifier)
   }
 
   @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
