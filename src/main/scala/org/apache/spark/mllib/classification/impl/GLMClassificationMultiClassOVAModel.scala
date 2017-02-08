@@ -12,8 +12,8 @@ import scala.collection.mutable
 private[classification] object GLMClassificationMultiClassOVAModel {
   object SaveLoadV1_0 {
     def thisFormatVersion: String = "1.0"
-    case class Data(classModelsWithIndex: Array[(SVMModel, Int)])
-    case class MetaDataIndex(classIndex: Array[Int])
+    case class Data(classModelsWithId: Array[(SVMModel, Int)])
+    case class MetaDataId(classId: Array[Int])
     def save( sc: SparkContext, path: String, modelClass: String, dataModels: Array[(SVMModel, Int)]): Unit = {
       val numFeatures: Int = dataModels.reduceLeft ((x, y) => if (x._1.weights.size > y._1.weights.size) x else y)._1.weights.size
       val numClasses: Int = dataModels.length
@@ -23,8 +23,8 @@ private[classification] object GLMClassificationMultiClassOVAModel {
         ("class" -> modelClass) ~ ("version" -> thisFormatVersion) ~
           ("numFeatures" -> numFeatures) ~ ("numClasses" -> numClasses) ) )
       sc.parallelize (Seq(metadata), 1).saveAsTextFile (Loader.metadataPath(path) )
-      val metaDataIndex = MetaDataIndex( dataModels.map( model => model._2 ) )
-      sc.parallelize (Seq (metaDataIndex), 1).toDF ().write.parquet (Loader.dataPath (path))
+      val metaDataId = MetaDataId( dataModels.map( model => model._2 ) )
+      sc.parallelize (Seq (metaDataId), 1).toDF ().write.parquet (Loader.dataPath (path))
       for( modelno <- dataModels.indices) {
         val model = dataModels(modelno)._1
         val modelid = dataModels(modelno)._2
@@ -39,11 +39,11 @@ private[classification] object GLMClassificationMultiClassOVAModel {
       assert(dataArray.length == 1, s"Unable to load $modelClass data from: $dataPath")
       val data = dataArray(0)
       assert(data.size == 1, s"Unable to load $modelClass data from: $dataPath")
-      val classIndex = data match {case Row (classIndex: mutable.WrappedArray[Int]) => classIndex }
-      val numClasses = classIndex.length
+      val classId = data match {case Row (classId: mutable.WrappedArray[Int]) => classId }
+      val numClasses = classId.length
       val dataModels : Array[(SVMModel, Int)] = Array.ofDim[(SVMModel, Int)](numClasses)
-      for( modelno <- classIndex.indices) {
-        val modelid = classIndex(modelno)
+      for( modelno <- classId.indices) {
+        val modelid = classId(modelno)
         val model = SVMModel.load(sc, path + "/class/" + modelid)
         dataModels(modelid) = (model,modelid)
       }
