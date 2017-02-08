@@ -9,12 +9,12 @@ import org.apache.spark.mllib.util.{DataValidators, Loader, Saveable}
 
 import org.apache.spark.mllib.classification.impl.GLMClassificationMultiClassOVAModel
 
-class SVMMultiClassOVAModel(classModels: Array[SVMModel], classIndices : Array[Int] = Array.empty) extends ClassificationModel with Serializable with Saveable {
+class SVMMultiClassOVAModel(classModels: Array[SVMModel], classIds : Array[Int] = Array.empty) extends ClassificationModel with Serializable with Saveable {
 
-  private def zipIndices(classModels: Array[SVMModel])(classIndices : Array[Int]): Array[(SVMModel, Int)] = {
-    if(classIndices.nonEmpty) classModels.zip(classIndices) else classModels.zipWithIndex
+  private def zipIndices(classModels: Array[SVMModel])(classIds : Array[Int]): Array[(SVMModel, Int)] = {
+    if(classIds.nonEmpty) classModels.zip(classIds) else classModels.zipWithIndex
   }
-  val classModelsWithIndex : Array[(SVMModel, Int)] = zipIndices(classModels)(classIndices)
+  val classModelsWithId : Array[(SVMModel, Int)] = zipIndices(classModels)(classIds)
 
   /**
    * Predict values for the given data set using the model trained.
@@ -23,8 +23,8 @@ class SVMMultiClassOVAModel(classModels: Array[SVMModel], classIndices : Array[I
    * @return an RDD[Double] where each entry contains the corresponding prediction
    */
   override def predict(testData: RDD[Vector]): RDD[Double] = {
-    val localClassModelsWithIndex = classModelsWithIndex
-    val bcClassModels = testData.context.broadcast(localClassModelsWithIndex)
+    val localClassModelsWithId = classModelsWithId
+    val bcClassModels = testData.context.broadcast(localClassModelsWithId)
     testData.mapPartitions { iter =>
       val w = bcClassModels.value
       iter.map(v => predictPoint(v, w))
@@ -37,7 +37,7 @@ class SVMMultiClassOVAModel(classModels: Array[SVMModel], classIndices : Array[I
    * @param testData array representing a single data point
    * @return predicted category from the trained model
    */
-  override def predict(testData: Vector): Double = predictPoint(testData, classModelsWithIndex)
+  override def predict(testData: Vector): Double = predictPoint(testData, classModelsWithId)
 
   def predictPoint(testData: Vector, models: Array[(SVMModel, Int)]): Double =
     models
@@ -48,7 +48,7 @@ class SVMMultiClassOVAModel(classModels: Array[SVMModel], classIndices : Array[I
   override protected def formatVersion: String = "1.0"
 
   override def save(sc: SparkContext, path: String): Unit = {
-    GLMClassificationMultiClassOVAModel.SaveLoadV1_0.save(sc, path, this.getClass.getName, classModelsWithIndex)
+    GLMClassificationMultiClassOVAModel.SaveLoadV1_0.save(sc, path, this.getClass.getName, classModelsWithId)
   }
 }
 
@@ -60,8 +60,8 @@ object SVMMultiClassOVAModel /*extends Loader[SVMMultiClassOVAModel]*/{
     (loadedClassName, version) match {
       case (className, "1.0") if className == classNameV1_0 =>
         val data = GLMClassificationMultiClassOVAModel.SaveLoadV1_0.loadData(sc, path, this.getClass.getName)
-        val dataModels = data.classModelsWithIndex.map( item => item._1 )
-        val dataIndices = data.classModelsWithIndex.map( item => item._2 )
+        val dataModels = data.classModelsWithId.map( item => item._1 )
+        val dataIndices = data.classModelsWithId.map( item => item._2 )
         val model = new SVMMultiClassOVAModel(dataModels, dataIndices)
         model
       case _ => throw new Exception(
