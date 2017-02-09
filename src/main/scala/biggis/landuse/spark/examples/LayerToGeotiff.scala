@@ -13,6 +13,7 @@ import geotrellis.raster.io.geotiff._
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerReader}
 import geotrellis.spark.stitch._
 import geotrellis.spark.{io => _, _}
+import geotrellis.vector.Extent
 import org.apache.hadoop.fs.Path
 
 // https://github.com/geotrellis/geotrellis/blob/master/docs/spark/spark-examples.md
@@ -61,7 +62,7 @@ object LayerToGeotiff extends LazyLogging{
       // one single GeoTiff, but attention
       val tiled: RDD[(SpatialKey, Tile)] = inputRdd.distinct()
 
-    val tile: Tile = tiled.stitch()
+      val tile: Tile = tiled.stitch()
 
       //val datum = crs.proj4jCrs.getDatum()
       //val epsg = crs.epsgCode.get
