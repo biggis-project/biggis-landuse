@@ -32,6 +32,7 @@ private[classification] object GLMClassificationMultiClassOVAModel {
       }
     }
     def loadData(sc: SparkContext, path: String, modelClass: String): Data = {
+      trait IntArray extends mutable.WrappedArray[Int]
       val dataPath = Loader.dataPath(path)
       val sqlContext = SQLContext.getOrCreate(sc)
       val dataRDD = sqlContext.read.parquet(dataPath)
@@ -39,7 +40,7 @@ private[classification] object GLMClassificationMultiClassOVAModel {
       assert(dataArray.length == 1, s"Unable to load $modelClass data from: $dataPath")
       val data = dataArray(0)
       assert(data.size == 1, s"Unable to load $modelClass data from: $dataPath")
-      val classId = data match {case Row (classId: mutable.WrappedArray[Int]) => classId }
+      val classId = data match {case Row (classId: IntArray) => classId }
       val numClasses = classId.length
       val dataModels : Array[(SVMModel, Int)] = Array.ofDim[(SVMModel, Int)](numClasses)
       for( modelno <- classId.indices) {
