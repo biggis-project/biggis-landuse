@@ -3,10 +3,14 @@ package biggis.landuse.spark.examples
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.Tile
 import geotrellis.spark.{SpaceTimeKey, SpatialKey, TemporalKey}
+import org.apache.hadoop.fs.{FileUtil, Path}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
+
+import scala.util.matching.Regex
 
 /**
   * Created by ak on 01.12.2016.
@@ -50,20 +54,51 @@ trait UtilsML{
 //    }
   }
 
-  def SaveAsLibSVMFile(data: RDD[LabeledPoint], trainingName: String): Unit = {
+  case class pathContents (dir: String, filename : String, suffix: String, dirbase: String, filebase: String, filetype: String, dir_hierarchy: Iterable[String])
+  def ParsePath(path: String): pathContents = {
+    val regexp = "((.*)[\\\\/])?(([^\\\\/]*?)(\\.([^.]*))?)$".r
+    val regexp(dir, dirbase, filename, filebase, suffix, filetype) = path
+    val hierarchy = dirbase.split("\\/").toIterable
+    pathContents(dir, filename, suffix, dirbase, filebase, filetype, hierarchy)
+  }
+  def DeleteFile(fileName: String)(implicit sc : SparkContext): Unit = {
     try {
-      val hdfs = org.apache.hadoop.fs.FileSystem.get(data.sparkContext.hadoopConfiguration)
-      if (hdfs.exists(new org.apache.hadoop.fs.Path(trainingName))) {
+      val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
+      if (hdfs.exists(new org.apache.hadoop.fs.Path(fileName))) {
         try {
-          hdfs.delete(new org.apache.hadoop.fs.Path(trainingName), true)
+          hdfs.delete(new org.apache.hadoop.fs.Path(fileName), true)
         } catch {
           case _: Throwable =>
         }
       }
-      MLUtils.saveAsLibSVMFile(data, trainingName)
     }
     catch {
       case _: Throwable =>
     }
   }
+  def SaveAsLibSVMFile(data: RDD[LabeledPoint], trainingName: String): Unit = {
+    try {
+      implicit val sc = data.sparkContext
+      val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
+      val trainingPath = ParsePath(trainingName)
+      val first_dir = trainingPath.dir_hierarchy.toArray.apply(1)
+      val use_single_file_export = trainingPath.filetype=="txt"
+      if(use_single_file_export){
+        val trainingNameTemp = trainingName+"_temp"
+        DeleteFile(trainingNameTemp)
+        MLUtils.saveAsLibSVMFile(data, trainingNameTemp)
+        DeleteFile(trainingName)
+        FileUtil.copyMerge(hdfs, new Path(trainingNameTemp), hdfs, new Path(trainingName), true, sc.hadoopConfiguration, null)
+        DeleteFile(trainingNameTemp)
+      }
+      else {
+        DeleteFile(trainingName)
+        MLUtils.saveAsLibSVMFile(data, trainingName)
+      }
+   }
+    catch {
+      case _: Throwable =>
+    }
+  }
+
 }
