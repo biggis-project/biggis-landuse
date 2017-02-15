@@ -149,6 +149,12 @@
       <version>${spark.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming-kafka_${scala.compat.version}</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
+
     <!-- ==== SPARK CSV ====================== -->
 
     <!-- https://mvnrepository.com/artifact/com.databricks/spark-csv_2.10 -->
