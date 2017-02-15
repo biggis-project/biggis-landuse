@@ -105,4 +105,38 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     }
   }
 
+  @deprecated("for debugging purposes")
+  case class Delimiter(delimiter: String)
+  @deprecated("for debugging purposes")
+  def SaveAsCSVFile(data: RDD[LabeledPoint], trainingName: String, delimiter: Delimiter = Delimiter(";")): Unit = {
+    try {
+      def SaveCSV(data: RDD[LabeledPoint], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
+        data
+          .map( row => {Array(row.label) ++ row.features.toDense.toArray}.mkString(delimiter.delimiter) )
+          .coalesce(1, shuffle = true)
+          .saveAsTextFile(trainingName)
+      }
+      implicit val sc = data.sparkContext
+      val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
+      val trainingPath = ParsePath(trainingName)
+      val first_dir = trainingPath.dir_hierarchy.toArray.apply(1)
+      val use_single_file_export = trainingPath.filetype=="csv"
+      if(use_single_file_export){
+        val trainingNameTemp = trainingName+"_temp"
+        DeleteFile(trainingNameTemp)
+        SaveCSV(data, trainingNameTemp)(delimiter)
+        DeleteFile(trainingName)
+        FileUtil.copyMerge(hdfs, new Path(trainingNameTemp), hdfs, new Path(trainingName), true, sc.hadoopConfiguration, null)
+        DeleteFile(trainingNameTemp)
+      }
+      else {
+        DeleteFile(trainingName)
+        SaveCSV(data, trainingName)(delimiter)
+      }
+    }
+    catch {
+      case _: Throwable =>
+    }
+  }
+
 }
