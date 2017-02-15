@@ -3,6 +3,7 @@ package biggis.landuse.spark.examples
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.Tile
 import geotrellis.spark.{Metadata, SpaceTimeKey, SpatialKey, TemporalKey, TileLayerMetadata}
+import org.apache.hadoop.fs.{FileUtil, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -97,15 +98,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
   @deprecated("do not use, replace by UtilsML.SaveAsLibSVMFile")
   def SaveAsLibSVMFile(data: (RDD[LabeledPoint], RDD[LabelPointSpatialRef]), trainingName: String): Unit = {
     try {
-      val hdfs = org.apache.hadoop.fs.FileSystem.get(data._1.sparkContext.hadoopConfiguration)
-      if (hdfs.exists(new org.apache.hadoop.fs.Path(trainingName))) {
-        try {
-          hdfs.delete(new org.apache.hadoop.fs.Path(trainingName), true)
-        } catch {
-          case _: Throwable =>
-        }
-      }
-      MLUtils.saveAsLibSVMFile(data._1, trainingName)
+      UtilsML.SaveAsLibSVMFile(data._1, trainingName)
     }
     catch {
       case _: Throwable =>
