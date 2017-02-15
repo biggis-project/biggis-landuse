@@ -2,7 +2,7 @@ package biggis.landuse.spark.examples
 
 
 import com.typesafe.scalalogging.slf4j.StrictLogging
-import org.apache.spark.SparkException
+import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.mllib.classification.{SVMModel, SVMMultiClassOVAModel, SVMWithSGD}
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
 import org.apache.spark.mllib.util.MLUtils
@@ -19,18 +19,18 @@ object TestClassifierSVM extends StrictLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(trainingName, modelPath) = args
-      TestClassifierSVM(trainingName)(modelPath)
+      implicit val sc = Utils.initSparkContext
+      TestClassifierSVM(trainingName)(modelPath, sc)
+      sc.stop()
     } catch {
       case _: MatchError => println("Run as: /path/to/sample_libsvm_data.txt /path/to/myModel")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
-  def apply(trainingName: String)(implicit modelPath: String): Unit = {
+  def apply(trainingName: String)(implicit modelPath: String, sc: SparkContext): Unit = {
     logger info s"(SVM) Classifying layer $trainingName in $modelPath ..."
     //ClassifierSVM
-
-    implicit val sc = Utils.initSparkContext
 
     // Load training data in LIBSVM format.
     val data = MLUtils.loadLibSVMFile(sc, trainingName)
