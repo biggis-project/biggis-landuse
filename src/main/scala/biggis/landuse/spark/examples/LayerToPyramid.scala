@@ -10,7 +10,7 @@ import geotrellis.spark.pyramid.Pyramid
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
 import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.SparkException
+import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.rdd.RDD
 
 object LayerToPyramid extends LazyLogging {
@@ -18,17 +18,19 @@ object LayerToPyramid extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(catalogPath, layerName) = args
+      implicit val sc = Utils.initSparkContext
       LayerToPyramid(catalogPath, layerName)
+      sc.stop()
     } catch {
       case _: MatchError => println("Run as: /path/to/catalog layerName")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
-  def apply(catalogPath: String, layerName: String): Unit = {
+  def apply(catalogPath: String, layerName: String)(implicit sc: SparkContext): Unit = {
     logger debug s"Building the pyramid from '$layerName' in catalog $catalogPath ..."
 
-    implicit val sc = Utils.initSparkContext
+    //implicit val sc = Utils.initSparkContext
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
@@ -65,7 +67,7 @@ object LayerToPyramid extends LazyLogging {
     // writing the histogram is only needed if we create a new layer
     // Utils.writeHistogram(attributeStore, layerName + "_p", inputRdd.histogram)
 
-    sc.stop()
+    //sc.stop()
     logger debug "Spark context stopped"
     logger debug s"Pyramid '$layerName' is ready in catalog '$catalogPath'"
   }
