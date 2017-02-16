@@ -53,13 +53,45 @@ object LayerToGeotiff extends LazyLogging{
 
     val metadata = inputRdd.metadata
 
-    val tiled: RDD[(SpatialKey, Tile)] = inputRdd.distinct()
+    val crs = metadata.crs
+
+    // ToDo: replace both "stitch" and "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
+    val useStitch = true
+    if(useStitch){  //Attn: stitched version may exceed max Memory, has georeference issues with WebMercator
+      // one single GeoTiff, but attention
+      val tiled: RDD[(SpatialKey, Tile)] = inputRdd.distinct()
 
     val tile: Tile = tiled.stitch()
 
-    val crs = metadata.crs
-    val raster: Raster[Tile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
-    GeoTiff(raster, crs).write(outputPath)
+      //val datum = crs.proj4jCrs.getDatum()
+      //val epsg = crs.epsgCode.get
+      //val param = crs.proj4jCrs.getParameters()
+      //val proj = crs.proj4jCrs.getProjection()
+      //val falseEasting = proj.getFalseEasting()
+      if( crs.epsgCode.get==3857){   //"WebMercator"
+        val raster: Raster[Tile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
+        GeoTiff(raster, crs).write(outputPath)
+        //val tileextent: Extent = metadata.extent
+        //GeoTiff(tile, tileextent, crs).write(outputPath)
+      } else {
+        val layoutextent: Extent = metadata.layoutExtent
+        GeoTiff(tile, layoutextent, crs).write(outputPath)  //for UTM32
+      }
+    } else {
+      // many GeoTiff tiles
+      val outputRdd:RDD[(SpatialKey, Tile)] = inputRdd
+      //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
+      //.repartition(Utils.RDD_PARTITIONS)
+
+      outputRdd.foreach (mbtile => {
+        val (key, tile) = mbtile
+        val (col, row) = (key.col, key.row)
+        val tileextent: Extent = metadata.layout.mapTransform(key)
+        GeoTiff(tile, tileextent, crs)
+          .write(outputPath + "_" + col + "_" + row + ".tif")
+      }
+      )
+    }
 
     //sc.stop()
     //logger debug "Spark context stopped"
