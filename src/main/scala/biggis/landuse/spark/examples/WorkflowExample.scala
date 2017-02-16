@@ -41,8 +41,10 @@ object WorkflowExample extends StrictLogging {
     val output_labeled_layerstack =  outputdir + "layerstack/labeled_layerstack.tif"
 
     val useLayerstackExport = false
+    val useResultExport = true
     val useCleanup = true
     val useWebMercator = true
+    val useLeaflet = false
 
     val (layer_label, layer_sat) =
       ("layer_label", "layer_sat")
@@ -76,10 +78,12 @@ object WorkflowExample extends StrictLogging {
     // ToDo: store Result RDD als Hadoop Layer layer_result
 
     // Export Result to GeoTiff
-    LayerToGeotiff(layer_result, output_result)
+    if(useResultExport){
+      LayerToGeotiff(layer_result, output_result)
+    }
 
     // Visualize Result
-    if(useWebMercator) {
+    if(useLeaflet && useWebMercator) {
       LayerToPyramid(catalogPath, layer_result)
       ServeLayerAsMap(catalogPath, layer_result)
     }
