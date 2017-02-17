@@ -92,8 +92,8 @@ class ServeLayerAsMapActor extends Actor with HttpService {
               Some(png.bytes)
             } catch {
               //// https://github.com/locationtech/geotrellis/commit/69ee528d99e4d126bd7dbf464ce7805fe4fe33d9
-              //case _: ValueNotFoundError => None  // TileNotFoundError in Geotrellis 0.10.3
-              case _: TileNotFoundError => None
+              case _: ValueNotFoundError => None  // TileNotFoundError in Geotrellis 0.10.3
+              //case _: TileNotFoundError => None
               case _: UnsupportedOperationException => None
             }
           }
