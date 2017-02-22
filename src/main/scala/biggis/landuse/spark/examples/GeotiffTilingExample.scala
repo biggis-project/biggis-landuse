@@ -1,6 +1,6 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
 import geotrellis.raster.withTileMethods
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerWriter, HadoopSparkContextMethodsWrapper}

@@ -1,6 +1,6 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.slf4j.StrictLogging
+import com.typesafe.scalalogging.StrictLogging
 import geotrellis.proj4.WebMercator
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.io.geotiff.{GeoTiff, MultibandGeoTiff, reader}

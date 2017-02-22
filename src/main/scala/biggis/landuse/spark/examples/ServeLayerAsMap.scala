@@ -2,7 +2,7 @@ package biggis.landuse.spark.examples
 
 import akka.actor._
 import akka.io.IO
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.HistogramDoubleFormat
