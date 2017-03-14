@@ -139,4 +139,95 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     }
   }
 
+  def LabeledPointWithKeyToArray( row :(SpatialKey, (Int, Int, LabeledPoint)) ) : Array[Any] = {
+    val (key: SpatialKey, (x: Int, y: Int, lp : LabeledPoint) ) = row
+    Array(lp.label) ++ lp.features.toDense.toArray ++ Array(key) ++ Array(x) ++ Array(y)
+  }
+  def ArrayToLabeledPointWithKey(cols: Array[String]) : (SpatialKey, (Int, Int, LabeledPoint)) = {
+    val featurelength = cols.length - 1 - 3   // label[1] + features[featurelength] + keys(SpatialKey,Int,Int)[3]
+    val label = cols(0).toDouble
+    val features = cols.take(1 + featurelength)
+    val keys = cols.drop(1 + featurelength)
+    val skey = keys(0).split("SpatialKey(,)")
+    val (key : SpatialKey, x: Int, y:Int) = (SpatialKey(skey(0).toInt, skey(1).toInt),keys(1).toInt,keys(2).toInt)
+    val featuresWithoutLabel = features.drop(1).map( col => col.toDouble ).toIterable
+    val featuresMllib = Vectors.dense(featuresWithoutLabel.toArray).compressed
+    (key,(x,y, LabeledPoint(label, featuresMllib)))
+  }
+  def LabeledPointWithKeyToString(row :(SpatialKey, (Int, Int, LabeledPoint)))(implicit delimiter: Delimiter) : String = {
+    LabeledPointWithKeyToArray(row).mkString(delimiter.delimiter)
+  }
+  def StringToLabeledPointWithKey(line: String)(implicit  delimiter: Delimiter) : (SpatialKey, (Int, Int, LabeledPoint)) = {
+    val cols = line.split(delimiter.delimiter).map(_.trim)
+    ArrayToLabeledPointWithKey(cols)
+  }
+
+  //@deprecated("for debugging purposes")
+  //case class RDDKeyLabeledPoint( rdd : RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]])
+  @deprecated("for debugging purposes")
+  def SaveAsCSVFileWithKey(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String, delimiter: Delimiter = Delimiter(";")): Unit = {
+    try {
+      def SaveCSV(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
+        data
+          .map( row => LabeledPointWithKeyToString(row))  //LabeledPointWithKeyToArray(row).mkString(delimiter.delimiter))
+          .coalesce(1, shuffle = true)
+          .saveAsTextFile(trainingName)
+      }
+      implicit val sc = data.sparkContext
+      val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
+      val trainingPath = ParsePath(trainingName)
+      val first_dir = trainingPath.dir_hierarchy.toArray.apply(1)
+      val use_single_file_export = trainingPath.filetype=="csv"
+      if(use_single_file_export){
+        val trainingNameTemp = trainingName+"_temp"
+        DeleteFile(trainingNameTemp)
+        SaveCSV(data, trainingNameTemp)(delimiter)
+        DeleteFile(trainingName)
+        FileUtil.copyMerge(hdfs, new Path(trainingNameTemp), hdfs, new Path(trainingName), true, sc.hadoopConfiguration, null)
+        DeleteFile(trainingNameTemp)
+      }
+      else {
+        DeleteFile(trainingName)
+        SaveCSV(data, trainingName)(delimiter)
+      }
+    }
+    catch {
+      case _: Throwable =>
+    }
+  }
+
+  @deprecated("for debugging purposes")
+  def LoadFromCSVFileWithKey(fileNameCSV: String, delimiter: Delimiter = Delimiter(";"))(implicit sc : SparkContext): Unit = {//} RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] = {
+    try {
+      def ToRDD(data : Iterator[(SpatialKey, (Int, Int, LabeledPoint))]) : RDD[(SpatialKey, (Int, Int, LabeledPoint))] = {
+        val dataRDD : RDD[(SpatialKey, (Int, Int, LabeledPoint))] = sc.parallelize(data.toSeq, 1)
+        dataRDD
+      }
+      def LoadCSV( trainingName: String)(implicit delimiter: Delimiter) : RDD[(SpatialKey, (Int, Int, LabeledPoint))] = { //with Metadata[TileLayerMetadata[SpatialKey]]
+        //println("Label, Features, ..., SpatialKey, x, y")
+        val bufferedSource = scala.io.Source.fromFile(trainingName)
+        val data = bufferedSource.getLines()
+          .map( line => StringToLabeledPointWithKey(line))
+        bufferedSource.close
+        ToRDD(data)
+      }
+      val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
+      val data : RDD[(SpatialKey, (Int, Int, LabeledPoint))] =
+      if (hdfs.exists(new org.apache.hadoop.fs.Path(fileNameCSV))){
+        LoadCSV(fileNameCSV)(delimiter)
+      }
+      else {
+        val empty = Array[String]()
+        val data = empty
+          .map( line => StringToLabeledPointWithKey(line)(delimiter))
+        ToRDD(data.toIterator)
+      }
+      data
+    }
+    catch {
+      case _: Throwable =>
+    }
+    //val data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] = ()
+    //data
+  }
 }
