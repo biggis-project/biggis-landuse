@@ -175,6 +175,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     try {
       def SaveCSV(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
         data
+          .filter(_._2._3.features.numNonzeros > 0) //Avoid NoData
           .map( row => LabeledPointWithKeyToString(row))  //LabeledPointWithKeyToArray(row).mkString(delimiter.delimiter))
           .coalesce(1, shuffle = true)
           .saveAsTextFile(trainingName)
