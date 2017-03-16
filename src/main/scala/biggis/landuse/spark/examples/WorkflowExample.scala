@@ -25,7 +25,7 @@ object WorkflowExample extends StrictLogging {
     // ToDo: generally replace SpatialKey by SpaceTimeKey, handle timestamp metadata
 
     // ToDo: configure local paths
-    //*
+    /*
       val projectdir = "data/workflowexample/"
 
       val inputdir = projectdir + "in/"
@@ -46,15 +46,15 @@ object WorkflowExample extends StrictLogging {
     // */
 
     // ToDo: configure local paths (example bw)
-    /*
+    //*
     val projectdir = "data/bw/"
 
     val tile_id = "3431_5378"
     val inputdir = projectdir + tile_id + "/"
     val outputdir = projectdir + "out/"
 
-    val input_label = inputdir + "bedeckung_" + tile_id + "_2m.tif"
-    val input_dop = inputdir + tile_id + "_epsg31467_2m.tif"
+    val input_label = inputdir + "bedeckung_" + tile_id + "_epsg32632_2m.tif"
+    val input_dop = inputdir + tile_id + "_epsg32632_2m.tif"
     val input_sat = inputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m.tif"
     //val input_sat = inputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m.tif"
     //val input_sat = inputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m.tif"
