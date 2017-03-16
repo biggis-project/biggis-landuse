@@ -1,15 +1,21 @@
 package biggis.landuse.spark.examples
 
+import geotrellis.raster
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.Tile
 import geotrellis.spark.{Metadata, SpaceTimeKey, SpatialKey, TemporalKey, TileLayerMetadata}
-import org.apache.hadoop.fs.{FileUtil, Path}
+import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.classification.SVMMultiClassOVAModel
+import scala.util.Try
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.native.JsonMethods._
+import org.json4s.native.Serialization
 
 /**
   * Renamed by ak on 26.01.2017.
@@ -173,6 +179,34 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
           .coalesce(1, shuffle = true)
           .saveAsTextFile(trainingName)
       }
+      def SaveCSVMetadata(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingMetaName: String)(implicit delimiter: Delimiter) : Unit = {
+        val metadata = data.metadata
+        val cellType = metadata.cellType
+        val layout = metadata.layout
+        val extent = metadata.extent
+        val crs = metadata.crs.toWKT()
+        val bounds =  metadata.bounds.mkString(",")
+        val array : Array[String] = Array(cellType.toString()) ++ Array(layout.toString()) ++ Array(extent.toString()) ++ Array(crs.toString()) ++ Array(bounds.toString())
+        val serialized_csv : String = array.mkString(delimiter.delimiter)
+        //val json = array.toList
+        val json = ("extent" -> extent.toString()) ~
+          ("layoutDefinition" -> layout.toString()) ~
+          ("bounds" -> bounds.toString()) ~
+          ("cellType" -> cellType.toString()) ~
+          ("crs" -> crs.toString())
+        val serialized_json = compact(render(json))
+        def writeTextFile(text: String, filename: String)(implicit sc : SparkContext) = {
+          // Hadoop Config is accessible from SparkContext
+          val fs = FileSystem.get(sc.hadoopConfiguration)
+          // Output file can be created from file system.
+          val output = fs.create(new Path(filename))
+          // But BufferedOutputStream must be used to output an actual text file.
+          output.write(text.getBytes("UTF-8"))
+          output.close()
+        }
+        //writeTextFile(serialized_csv, trainingMetaName)(data.sparkContext)
+        writeTextFile(serialized_json, trainingMetaName)(data.sparkContext)
+      }
       implicit val sc = data.sparkContext
       val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
       val trainingPath = ParsePath(trainingName)
@@ -185,10 +219,12 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
         DeleteFile(trainingName)
         FileUtil.copyMerge(hdfs, new Path(trainingNameTemp), hdfs, new Path(trainingName), true, sc.hadoopConfiguration, null)
         DeleteFile(trainingNameTemp)
+        SaveCSVMetadata(data, trainingName+".metadata")(delimiter)
       }
       else {
         DeleteFile(trainingName)
         SaveCSV(data, trainingName)(delimiter)
+        SaveCSVMetadata(data, trainingName+".metadata")(delimiter)
       }
     }
     catch {
@@ -211,9 +247,21 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
         bufferedSource.close
         ToRDD(data)
       }
+      def LoadCSVMetadata(trainingMetaName: String)(implicit delimiter: Delimiter) : Array[String] ={ // : Metadata[TileLayerMetadata[SpatialKey]] = {
+        val bufferedSource = scala.io.Source.fromFile(trainingMetaName)
+        def StringToMetadata( text : String) : String = {
+          val json = parse(text)
+          text
+        }
+        val metadata : Iterator[String] = bufferedSource.getLines()
+          .map( line => StringToMetadata(line))
+        bufferedSource.close
+        metadata.toArray
+      }
       val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
       val data : RDD[(SpatialKey, (Int, Int, LabeledPoint))] =
       if (hdfs.exists(new org.apache.hadoop.fs.Path(fileNameCSV))){
+        val metadata = LoadCSVMetadata(fileNameCSV+".metadata")(delimiter)
         LoadCSV(fileNameCSV)(delimiter)
       }
       else {
