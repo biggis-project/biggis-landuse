@@ -55,6 +55,7 @@ object WorkflowExample extends StrictLogging {
 
     val input_label = inputdir + "bedeckung_" + tile_id + "_epsg32632_2m.tif"
     val input_dop = inputdir + tile_id + "_epsg32632_2m.tif"
+    //val input_sat = input_dop
     val input_sat = inputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m.tif"
     //val input_sat = inputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m.tif"
     //val input_sat = inputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m.tif"
@@ -64,7 +65,12 @@ object WorkflowExample extends StrictLogging {
     val output_labeled_layerstack =  outputdir + "labeled_layerstack.tif"
 
     //val fileNameCSV = catalogPath + "/" + labeled_layerstack + "_withkey" + ".csv"
-    val fileNameCSV =  outputdir + tile_id + "_2m" + ".csv"
+    //val fileNameCSV =  outputdir + tile_id + "_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "dop_" + tile_id + "_2m" + ".csv"
+    val fileNameCSV =  outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
     // */
 
     val useLayerstackExport = false
