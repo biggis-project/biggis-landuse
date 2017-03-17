@@ -73,6 +73,7 @@ object WorkflowExample extends StrictLogging {
     //val fileNameCSV =  outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
     // */
 
+    val useDebugLayerExport = true  //for debugging only
     val useLayerstackExport = false
     val useResultExport = false
     val useCleanup = true
@@ -94,6 +95,11 @@ object WorkflowExample extends StrictLogging {
         ManyLayersToMultibandLayer(layer_label,  layer_sat,  layer_label_sat)
         layer_label_sat
       }
+
+    if(useDebugLayerExport){
+      MultibandLayerToGeotiff(layer_label, output_labeled_layerstack+".label.tif")
+      MultibandLayerToGeotiff(layer_sat, output_labeled_layerstack+".layer.tif")
+    }
 
     if(useCleanup){
       DeleteLayer(layer_label)
