@@ -25,11 +25,11 @@ object WorkflowExample extends StrictLogging {
     // ToDo: generally replace SpatialKey by SpaceTimeKey, handle timestamp metadata
 
     // Settings (for Debugging)
-    val useDebugLayerExport = true  //for debugging only
+    val useDebugLayerExport = false  //for debugging only
     val useLayerstackExport = false
     val useResultExport = false
     val useCleanup = true
-    val useWebMercator = false  //disabled - use original resolution for csv export
+    val useWebMercator = true  //disabled - use original resolution for csv export
     val useLeaflet = false
 
     // ToDo: configure local paths
@@ -87,8 +87,8 @@ object WorkflowExample extends StrictLogging {
 
     val input_label = inputdir + "label"
     val input_dop = inputdir + "dop"
-    //val input_sat = input_dop
-    val input_sat = inputdir + "sat_1"
+    val input_sat = input_dop
+    //val input_sat = inputdir + "sat_1"
     //val input_sat = inputdir + "sat_2"
     //val input_sat = inputdir + "sat_3"
     //val input_sat = inputdir + "sat_4"
@@ -98,11 +98,21 @@ object WorkflowExample extends StrictLogging {
 
     //val fileNameCSV = catalogPath + "/" + labeled_layerstack + "_withkey" + ".csv"
     //val fileNameCSV =  outputdir + tile_id + "_2m" + ".csv"
-    //val fileNameCSV =  outputdir + "dop_" + tile_id + "_2m" + ".csv"
-    val fileNameCSV =  outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
-    //val fileNameCSV =  outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
-    //val fileNameCSV =  outputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
-    //val fileNameCSV =  outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+    val fileNameCSV =
+    if(useWebMercator) {
+      outputdir + "dop__prio1_epsg3857_zoom17" + ".csv"
+      //outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
+      //outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
+      //outputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
+      //outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
+    }
+    else{
+      outputdir + "dop__prio1__2m" + ".csv"
+      //outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+      //outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+      //voutputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+      //outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+    }
     // */
 
     val (layer_label, layer_sat) =
