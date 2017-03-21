@@ -24,6 +24,14 @@ object WorkflowExample extends StrictLogging {
   def apply()(implicit catalogPath: String, sc: SparkContext): Unit = {
     // ToDo: generally replace SpatialKey by SpaceTimeKey, handle timestamp metadata
 
+    // Settings (for Debugging)
+    val useDebugLayerExport = true  //for debugging only
+    val useLayerstackExport = false
+    val useResultExport = false
+    val useCleanup = true
+    val useWebMercator = false  //disabled - use original resolution for csv export
+    val useLeaflet = false
+
     // ToDo: configure local paths
     /*
       val projectdir = "data/workflowexample/"
@@ -48,7 +56,7 @@ object WorkflowExample extends StrictLogging {
     // ToDo: configure local paths (example bw)
     //*
     val projectdir = "data/bw/"
-
+    /*
     val tile_id = "3431_5378"
     val inputdir = projectdir + tile_id + "/"
     val outputdir = projectdir + "out/"
@@ -72,13 +80,30 @@ object WorkflowExample extends StrictLogging {
     //val fileNameCSV =  outputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
     //val fileNameCSV =  outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_" + tile_id + "_2m" + ".csv"
     // */
+    //*
+    //val tile_id = "3431_5378"
+    val inputdir = projectdir + "/"
+    val outputdir = projectdir + "out/"
 
-    val useDebugLayerExport = true  //for debugging only
-    val useLayerstackExport = false
-    val useResultExport = false
-    val useCleanup = true
-    val useWebMercator = false  //disabled - use original resolution for csv export
-    val useLeaflet = false
+    val input_label = inputdir + "label"
+    val input_dop = inputdir + "dop"
+    //val input_sat = input_dop
+    val input_sat = inputdir + "sat_1"
+    //val input_sat = inputdir + "sat_2"
+    //val input_sat = inputdir + "sat_3"
+    //val input_sat = inputdir + "sat_4"
+
+    val output_result = outputdir + "result.tif"
+    val output_labeled_layerstack =  outputdir + "labeled_layerstack.tif"
+
+    //val fileNameCSV = catalogPath + "/" + labeled_layerstack + "_withkey" + ".csv"
+    //val fileNameCSV =  outputdir + tile_id + "_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "dop_" + tile_id + "_2m" + ".csv"
+    val fileNameCSV =  outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+    //val fileNameCSV =  outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
+    // */
 
     val (layer_label, layer_sat) =
       ("layer_label", "layer_sat")
@@ -97,6 +122,7 @@ object WorkflowExample extends StrictLogging {
       }
 
     if(useDebugLayerExport){
+      val output_labeled_layerstack =  outputdir + "debugging/" + "labeled_layerstack.tif"
       MultibandLayerToGeotiff(layer_label, output_labeled_layerstack+".label.tif")
       MultibandLayerToGeotiff(layer_sat, output_labeled_layerstack+".layer.tif")
     }
