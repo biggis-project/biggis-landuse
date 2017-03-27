@@ -114,7 +114,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
   @deprecated("for debugging purposes")
   case class Delimiter(delimiter: String)
   @deprecated("for debugging purposes")
-  def SaveAsCSVFile(data: RDD[LabeledPoint], trainingName: String, delimiter: Delimiter = Delimiter(";")): Unit = {
+  def SaveAsCSVFile(data: RDD[LabeledPoint], trainingName: String, delimiter: Delimiter = Delimiter(";"))(implicit removeZeroLabel: Boolean = false): Unit = {
     try {
       def SaveCSV(data: RDD[LabeledPoint], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
         data
@@ -130,14 +130,22 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
       if(use_single_file_export){
         val trainingNameTemp = trainingName+"_temp"
         DeleteFile(trainingNameTemp)
-        SaveCSV(data, trainingNameTemp)(delimiter)
+        if(removeZeroLabel){
+          val data_w_o_nodata = data.filter( _.label > 0)
+          SaveCSV(data_w_o_nodata, trainingNameTemp)(delimiter)
+        } else
+          SaveCSV(data, trainingNameTemp)(delimiter)
         DeleteFile(trainingName)
         FileUtil.copyMerge(hdfs, new Path(trainingNameTemp), hdfs, new Path(trainingName), true, sc.hadoopConfiguration, null)
         DeleteFile(trainingNameTemp)
       }
       else {
         DeleteFile(trainingName)
-        SaveCSV(data, trainingName)(delimiter)
+        if(removeZeroLabel){
+          val data_w_o_nodata = data.filter( _.label > 0)
+          SaveCSV(data_w_o_nodata, trainingName)(delimiter)
+        } else
+          SaveCSV(data, trainingName)(delimiter)
       }
     }
     catch {
