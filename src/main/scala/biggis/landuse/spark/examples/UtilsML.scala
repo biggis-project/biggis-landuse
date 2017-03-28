@@ -76,7 +76,7 @@ trait UtilsML{
       case _: Throwable =>
     }
   }
-  def SaveAsLibSVMFile(data: RDD[LabeledPoint], trainingName: String): Unit = {
+  def SaveAsLibSVMFile(data: RDD[LabeledPoint], trainingName: String)(implicit removeZeroLabel: Boolean = false): Unit = {
     try {
       implicit val sc = data.sparkContext
       val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
@@ -86,14 +86,22 @@ trait UtilsML{
       if(use_single_file_export){
         val trainingNameTemp = trainingName+"_temp"
         DeleteFile(trainingNameTemp)
-        MLUtils.saveAsLibSVMFile(data, trainingNameTemp)
+        if(removeZeroLabel){
+          val data_w_o_nodata = data.filter( _.label > 0)
+          MLUtils.saveAsLibSVMFile(data_w_o_nodata, trainingNameTemp)
+        } else
+          MLUtils.saveAsLibSVMFile(data, trainingNameTemp)
         DeleteFile(trainingName)
         FileUtil.copyMerge(hdfs, new Path(trainingNameTemp), hdfs, new Path(trainingName), true, sc.hadoopConfiguration, null)
         DeleteFile(trainingNameTemp)
       }
       else {
         DeleteFile(trainingName)
-        MLUtils.saveAsLibSVMFile(data, trainingName)
+        if(removeZeroLabel){
+          val data_w_o_nodata = data.filter( _.label > 0)
+          MLUtils.saveAsLibSVMFile(data_w_o_nodata, trainingName)
+        } else
+          MLUtils.saveAsLibSVMFile(data, trainingName)
       }
    }
     catch {
