@@ -78,7 +78,7 @@ object NDVILayerWithCloudMaskExample extends LazyLogging {
           implicit val qaTile = tileClouds
           val tileNIRMasked = maskClouds(tileNIR).convert(DoubleConstantNoDataCellType)
           val tileRedMasked = maskClouds(tileRed).convert(DoubleConstantNoDataCellType)
-          val tile = tileNIRMasked.combineDouble(tileRedMasked) {
+          val tile = tileRedMasked.combineDouble(tileNIRMasked) {
             (r: Double, ir: Double) => ndvi(r,ir)
           }
           (spatialKey, tile)
