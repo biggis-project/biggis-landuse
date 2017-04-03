@@ -59,6 +59,7 @@ object GettingStarted extends LazyLogging {
       GeotiffTilingExample( path + file_L8_BQA_clouds, layer_L8_BQA_clouds)
 
       val layer_NDVI = "layer_NDVI"
+      //NDVILayerExample( layer_L8_B5_nir, layer_L8_B4_red, layer_NDVI)
       NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
 
       // Save NDVI To File
