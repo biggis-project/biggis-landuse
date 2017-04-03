@@ -53,13 +53,13 @@ object GettingStarted extends LazyLogging {
       // see: geotrellis-landsat-tutorial/src/main/scala/tutorial/IngestImage.scala
       // https://github.com/geotrellis/geotrellis-landsat-tutorial/blob/master/src/main/scala/tutorial/IngestImage.scala
       // replaced by GeotiffTilingExample
-      //GeotiffTilingExample( path + file_L8_B3_green, layer_L8_B3_green)
-      //GeotiffTilingExample( path + file_L8_B4_red, layer_L8_B4_red)
-      //GeotiffTilingExample( path + file_L8_B5_nir, layer_L8_B5_nir)
-      //GeotiffTilingExample( path + file_L8_BQA_clouds, layer_L8_BQA_clouds)
+      GeotiffTilingExample( path + file_L8_B3_green, layer_L8_B3_green)
+      GeotiffTilingExample( path + file_L8_B4_red, layer_L8_B4_red)
+      GeotiffTilingExample( path + file_L8_B5_nir, layer_L8_B5_nir)
+      GeotiffTilingExample( path + file_L8_BQA_clouds, layer_L8_BQA_clouds)
 
       val layer_NDVI = "layer_NDVI"
-      //NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
+      NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
 
       // Save NDVI To File
       LayerToGeotiff(layer_NDVI, path + bandPath("NDVI"))
