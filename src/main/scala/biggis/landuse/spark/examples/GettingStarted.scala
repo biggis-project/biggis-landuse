@@ -63,7 +63,7 @@ object GettingStarted extends LazyLogging {
       NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
 
       // Save NDVI To File
-      //LayerToGeotiff(layer_NDVI, path + bandPath("NDVI"))   // ToDo: fix stitching, file too big
+      //LayerToGeotiff(layer_NDVI, path + "test/" + bandPath("NDVI"))   // ToDo: fix stitching, file too big
 
       // Serve Layer via Leaflet static/GettingStarted.html
       LayerToPyramid(catalogPath, layer_NDVI)

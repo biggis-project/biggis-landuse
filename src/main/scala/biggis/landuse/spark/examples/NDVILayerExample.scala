@@ -60,9 +60,9 @@ object NDVILayerExample extends LazyLogging {
       tilesNIR.withContext { rdd => rdd
         .join(tilesRed)
         .map { case (spatialKey, (tileNIR, tileRed)) =>
-          //val tileNIRFloat = tileNIR.convert(DoubleConstantNoDataCellType)
-          //val tileRedFloat = tileRed.convert(DoubleConstantNoDataCellType)
-          val tile = tileRed.combineDouble(tileNIR) {
+          val tileNIRFloat = tileNIR.convert(DoubleConstantNoDataCellType)
+          val tileRedFloat = tileRed.convert(DoubleConstantNoDataCellType)
+          val tile = tileRedFloat.combineDouble(tileNIRFloat) {
             (r: Double, ir: Double) => ndvi(r,ir)
           }
           (spatialKey, tile)
