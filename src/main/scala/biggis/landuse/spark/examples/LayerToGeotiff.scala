@@ -57,7 +57,7 @@ object LayerToGeotiff extends LazyLogging{
     val crs = metadata.crs
 
     // ToDo: replace both "stitch" and "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
-    val useStitch = true
+    val useStitch = false
     if(useStitch){  //Attn: stitched version may exceed max Memory, has georeference issues with WebMercator
       // one single GeoTiff, but attention
       val tiled: RDD[(SpatialKey, Tile)] = inputRdd.distinct()
