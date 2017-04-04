@@ -15,3 +15,21 @@ java -cp target/biggis-landuse-0.0.1-SNAPSHOT.jar \
   new_layer_name \
   /path/to/catalog-dir
 ```
+
+# GettingStarted Example
+###### in src/main/scala/biggis.landuse.spark.examples/GettingStarted.scala
+##### based on https://github.com/geotrellis/geotrellis-landsat-tutorial
+```
+# download examples from geotrellis-landsat-tutorial
+wget http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B3.TIF
+wget http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B4.TIF
+wget http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B5.TIF
+wget http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_BQA.TIF
+wget http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_MTL.txt
+# to data/geotrellis-landsat-tutorial
+```
+##### To Debug in IDE, please set VM options to
+  -Dspark.master=local[*]
+##### and program arguments to
+  target/geotrellis-catalog
+#

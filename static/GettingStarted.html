@@ -1,0 +1,25 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
+<link rel="stylesheet" href="leaflet.css" />
+<script src="leaflet.js"></script>
+<style type="text/css">
+body, #map {
+  height: 100%;
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map');
+
+  <!-- map.setView([48.54258, 8.07666], 13); -->	
+  map.setView([36.0, 140.0], 13);
+
+  new L.tileLayer("http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png").addTo(map);
+
+  new L.tileLayer("http://localhost:18080/{z}/{x}/{y}", {layers: 'default', maxNativeZoom: 14, maxZoom: 14}).addTo(map);
+</script>
+</body>
+</html>
