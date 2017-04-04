@@ -53,7 +53,7 @@ object GettingStarted extends LazyLogging {
       // see: geotrellis-landsat-tutorial/src/main/scala/tutorial/IngestImage.scala
       // https://github.com/geotrellis/geotrellis-landsat-tutorial/blob/master/src/main/scala/tutorial/IngestImage.scala
       // replaced by GeotiffTilingExample
-      GeotiffTilingExample( path + file_L8_B3_green, layer_L8_B3_green)
+      //GeotiffTilingExample( path + file_L8_B3_green, layer_L8_B3_green)
       GeotiffTilingExample( path + file_L8_B4_red, layer_L8_B4_red)
       GeotiffTilingExample( path + file_L8_B5_nir, layer_L8_B5_nir)
       GeotiffTilingExample( path + file_L8_BQA_clouds, layer_L8_BQA_clouds)
@@ -62,8 +62,13 @@ object GettingStarted extends LazyLogging {
       //NDVILayerExample( layer_L8_B5_nir, layer_L8_B4_red, layer_NDVI)
       NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
 
+      /*
+      * Attention: LayerToGeotiff export notes (stitching disabled by default)
+      * create directory "data/geotrellis-landsat-tutorial/test" first for tiles export
+      * */
       // Save NDVI To File
-      //LayerToGeotiff(layer_NDVI, path + "test/" + bandPath("NDVI"))   // ToDo: fix stitching, file too big
+      //LayerToGeotiff(layer_NDVI, path + "test/" + bandPath("NDVI"))   // ToDo: change tiling, too many tiles if disabled stitching (default)
+      //LayerToGeotiff(layer_NDVI, path + bandPath("NDVI_stitched"), useStitching = true)   // ToDo: fix stitching, file too big for memory
 
       // Serve Layer via Leaflet static/GettingStarted.html
       LayerToPyramid(catalogPath, layer_NDVI)
