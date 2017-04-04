@@ -20,7 +20,7 @@ object NDVILayerExample extends LazyLogging {
       NDVILayerExample(layerNIR, layerRed, layerNDVI)(catalogPath, sc)
       sc.stop()
     } catch {
-      case _: MatchError => println("Run as: layerNIR layerRed layerCloud layerNDVI /path/to/catalog")
+      case _: MatchError => println("Run as: layerNIR layerRed layerNDVI /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
