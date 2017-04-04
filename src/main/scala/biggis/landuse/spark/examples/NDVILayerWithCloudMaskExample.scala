@@ -1,6 +1,6 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.{DoubleConstantNoDataCellType, NODATA, Tile, isData}
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
