@@ -31,7 +31,7 @@ object LayerToGeotiff extends LazyLogging{
     }
   }
 
-  def apply(layerName: String, outputPath: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
+  def apply(layerName: String, outputPath: String, useStitching: Boolean = false)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Writing layer '$layerName' in catalog '$catalogPath' to '$outputPath'"
 
     //implicit val sc = Utils.initSparkContext
@@ -57,8 +57,7 @@ object LayerToGeotiff extends LazyLogging{
     val crs = metadata.crs
 
     // ToDo: replace both "stitch" and "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
-    val useStitch = false
-    if(useStitch){  //Attn: stitched version may exceed max Memory, has georeference issues with WebMercator
+    if(useStitching){  //Attn: stitched version may exceed max Memory, has georeference issues with WebMercator
       // one single GeoTiff, but attention
       val tiled: RDD[(SpatialKey, Tile)] = inputRdd.distinct()
 
