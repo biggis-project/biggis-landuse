@@ -38,7 +38,7 @@ object ServeLayerAsMap extends LazyLogging {
 
       logger info "setting variables from commandline"
 
-      layerNameServed = layerName // TODO
+      //layerNameServed = layerName // TODO // moved to apply(...)
 
       implicit val sc = Utils.initSparkContext
 
@@ -58,6 +58,7 @@ object ServeLayerAsMap extends LazyLogging {
   }
 
   def apply(catalogPath: String, layerNameServed: String): Unit = {
+    ServeLayerAsMap.layerNameServed = layerNameServed // TODO // moved here from main(...) to be used in ServeLayerAsMapActor
 
     logger info s"Serving layer='$layerNameServed' from catalog='$catalogPath'"
 
