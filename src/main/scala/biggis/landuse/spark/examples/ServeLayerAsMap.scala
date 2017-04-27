@@ -11,7 +11,7 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.hadoop.HadoopValueReader
 import org.apache.hadoop.fs.Path
-import org.apache.spark.SparkException
+import org.apache.spark.{SparkContext, SparkException}
 import spray.can.Http
 import spray.http.MediaTypes
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
@@ -38,17 +38,17 @@ object ServeLayerAsMap extends LazyLogging {
 
       logger info "setting variables from commandline"
 
-      //layerNameServed = layerName // TODO // moved to apply(...)
+      //layerNameServed = layerName // TODO // moved to apply(...) using init()
 
       implicit val sc = Utils.initSparkContext
 
-      // catalog reader
-      fileValueReader = HadoopValueReader(new Path(catalogPath))
+      // catalog reader // moved to apply(...) using init()
+      //fileValueReader = HadoopValueReader(new Path(catalogPath))
 
-      // read quantile breaks from attribute store
-      val layerId = LayerId(layerName, 0)
-      val hist = fileValueReader.attributeStore.read[Histogram[Double]](layerId, "histogramData")
-      colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(10))
+      // read quantile breaks from attribute store  // moved to apply(...) using initHeatMap(...)
+      //val layerId = LayerId(layerName, 0)
+      //val hist = fileValueReader.attributeStore.read[Histogram[Double]](layerId, "histogramData")
+      //colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(10))
 
       ServeLayerAsMap(catalogPath, layerName)
     } catch {
@@ -57,8 +57,11 @@ object ServeLayerAsMap extends LazyLogging {
     }
   }
 
-  def apply(catalogPath: String, layerNameServed: String): Unit = {
-    ServeLayerAsMap.layerNameServed = layerNameServed // TODO // moved here from main(...) to be used in ServeLayerAsMapActor
+  def apply(catalogPath: String, layerNameServed: String)(implicit sc: SparkContext): Unit = {
+    // init catalog reader
+    init(catalogPath, layerNameServed)
+    // init ColorMap
+    ServeLayerAsMap.colorMap = initHeatmap(layerNameServed)
 
     logger info s"Serving layer='$layerNameServed' from catalog='$catalogPath'"
 
@@ -71,6 +74,21 @@ object ServeLayerAsMap extends LazyLogging {
     IO(Http) ! Http.Bind(service, "localhost", 18080)
     println("Now open the file 'static/index.html' in your browser.")
     println("The HTML code uses leaflet javascript library which communicates with our tile-serving backend.")
+  }
+
+  // init catalog reader
+  def init(catalogPath: String, layerNameServed: String)(implicit sc: SparkContext): Unit = {
+    ServeLayerAsMap.layerNameServed = layerNameServed
+    // catalog reader
+    ServeLayerAsMap.fileValueReader = HadoopValueReader(new Path(catalogPath))
+  }
+  // init ColorMap
+  def initHeatmap(layerNameServed: String):  ColorMap = {
+    // read quantile breaks from attribute store
+    val layerId = LayerId(layerNameServed, 0)
+    val hist = fileValueReader.attributeStore.read[Histogram[Double]](layerId, "histogramData")
+    colorMap = ColorRamps.HeatmapBlueToYellowToRedSpectrum.toColorMap(hist.quantileBreaks(10))
+    colorMap
   }
 }
 
