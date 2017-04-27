@@ -72,6 +72,6 @@ object GettingStarted extends LazyLogging {
 
       // Serve Layer via Leaflet static/GettingStarted.html
       LayerToPyramid(catalogPath, layer_NDVI)
-      ServeLayerAsMap(catalogPath, layer_NDVI)
+      ServeLayerAsMap(catalogPath, layer_NDVI, NDVILayerExample.colorMap)
     }
 }

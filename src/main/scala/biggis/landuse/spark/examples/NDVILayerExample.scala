@@ -2,6 +2,7 @@ package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.{DoubleConstantNoDataCellType, NODATA, Tile, isData}
+import geotrellis.raster.render.ColorMap
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
@@ -12,6 +13,10 @@ import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.rdd.RDD
 
 object NDVILayerExample extends LazyLogging {
+
+  // from geotrellis/geotrellis-landsat-tutorial -> src/main/resources/application.conf
+  // tutorial.ndviColormap = "0:ffffe5ff;0.1:f7fcb9ff;0.2:d9f0a3ff;0.3:addd8eff;0.4:78c679ff;0.5:41ab5dff;0.6:238443ff;0.7:006837ff;1:004529ff"
+  var colorMap : ColorMap = ColorMap.fromStringDouble(s"0:ffffe5ff;0.1:f7fcb9ff;0.2:d9f0a3ff;0.3:addd8eff;0.4:78c679ff;0.5:41ab5dff;0.6:238443ff;0.7:006837ff;1:004529ff").get
 
   def main(args: Array[String]): Unit = {
     try {
