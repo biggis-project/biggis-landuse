@@ -57,11 +57,11 @@ object ServeLayerAsMap extends LazyLogging {
     }
   }
 
-  def apply(catalogPath: String, layerNameServed: String)(implicit sc: SparkContext): Unit = {
+  def apply(catalogPath: String, layerNameServed: String, colorMap: ColorMap = null)(implicit sc: SparkContext): Unit = {
     // init catalog reader
     init(catalogPath, layerNameServed)
     // init ColorMap
-    ServeLayerAsMap.colorMap = initHeatmap(layerNameServed)
+    ServeLayerAsMap.colorMap = if(colorMap == null) initHeatmap(layerNameServed) else colorMap
 
     logger info s"Serving layer='$layerNameServed' from catalog='$catalogPath'"
 
