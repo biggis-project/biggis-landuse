@@ -1,5 +1,5 @@
 #!/bin/bash
-java -Xmx8g -Dspark.master=local[*]  -cp target/biggis-landuse-0.0.1-SNAPSHOT.jar \
+java -Xmx8g -Dspark.master=local[*]  -cp target/biggis-landuse-0.0.2-SNAPSHOT.jar \
   biggis.landuse.spark.examples.$1 \
   $2 \
   $3 \
