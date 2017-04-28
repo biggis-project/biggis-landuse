@@ -1,7 +1,7 @@
 package biggis.landuse.spark.examples
 
 import biggis.landuse.spark.examples.MultibandGeotiffTilingExample.logger
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.{ArrayMultibandTile, DoubleConstantNoDataCellType, IntConstantNoDataCellType, MultibandTile, Tile}
 import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}

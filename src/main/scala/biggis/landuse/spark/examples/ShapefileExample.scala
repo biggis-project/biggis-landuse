@@ -1,6 +1,6 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.vividsolutions.jts.{geom => jts}
 import geotrellis.shapefile.ShapeFileReader
 import org.apache.spark.SparkException

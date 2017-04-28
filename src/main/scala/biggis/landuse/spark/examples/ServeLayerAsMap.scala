@@ -2,7 +2,7 @@ package biggis.landuse.spark.examples
 
 import akka.actor._
 import akka.io.IO
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.HistogramDoubleFormat
@@ -111,8 +111,8 @@ class ServeLayerAsMapActor extends Actor with HttpService {
               Some(png.bytes)
             } catch {
               //// https://github.com/locationtech/geotrellis/commit/69ee528d99e4d126bd7dbf464ce7805fe4fe33d9
-              //case _: ValueNotFoundError => None  // TileNotFoundError in Geotrellis 0.10.3
-              case _: TileNotFoundError => None
+              case _: ValueNotFoundError => None  // TileNotFoundError in Geotrellis 0.10.3
+              //case _: TileNotFoundError => None
               case _: UnsupportedOperationException => None
             }
           }

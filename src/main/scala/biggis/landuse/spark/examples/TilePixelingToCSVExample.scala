@@ -1,7 +1,7 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging._
-import com.typesafe.scalalogging.slf4j._
+//import com.typesafe.scalalogging.slf4j._
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.mapalgebra.focal.Kernel
 import geotrellis.raster.{DoubleArrayTile, MultibandTile, Tile, withTileMethods}

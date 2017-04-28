@@ -3,10 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>biggis</groupId>
   <artifactId>biggis-landuse</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-SNAPSHOT</version>
   <name>${project.artifactId}</name>
   <description>Land use update detection based on Geotrellis and Spark</description>
-  <inceptionYear>2016</inceptionYear>
+  <inceptionYear>2017</inceptionYear>
   <organization>
     <name>BigGIS Project</name>
     <url>http://biggis-project.eu/</url>
@@ -31,8 +31,8 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
-    <geotrellis.version>0.10.3</geotrellis.version>
-    <spark.version>1.6.2</spark.version>
+    <geotrellis.version>1.1.0-RC4</geotrellis.version>
+    <spark.version>2.1.0</spark.version>
   </properties>
 
   <!-- see: http://stackoverflow.com/questions/16225573/why-cant-i-resolve-the-dependencies-for-geotools-maven-quickstart -->
@@ -61,7 +61,7 @@
 
     <!-- ==== GEOTRELLIS ========================== -->
     <dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-spark_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency>
@@ -73,43 +73,43 @@
     </dependency>
 
     <dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-spark-etl_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency>
 
     <!--dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-util_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency-->
 
     <!--dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-raster_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency-->
 
     <dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-vector_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-shapefile_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-proj4_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency>
 
     <!--dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-accumulo_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency-->
@@ -121,7 +121,7 @@
     </dependency-->
 
     <!--dependency>
-      <groupId>com.azavea.geotrellis</groupId>
+      <groupId>org.locationtech.geotrellis</groupId>
       <artifactId>geotrellis-geotools_${scala.compat.version}</artifactId>
       <version>${geotrellis.version}</version>
     </dependency-->
@@ -140,10 +140,16 @@
       <version>1.3.3</version>
     </dependency>
 
-    <!--dependency>
+    <dependency>
       <groupId>com.typesafe.akka</groupId>
       <artifactId>akka-actor_${scala.compat.version}</artifactId>
       <version>2.4.16</version>
+    </dependency>
+
+   <!--dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-slf4j_${scala.compat.version}</artifactId>
+      <version>2.4.17</version>
     </dependency-->
 
     <!-- ==== SPARK ========================== -->
@@ -160,11 +166,11 @@
       <version>${spark.version}</version>
     </dependency>
 
-    <dependency>
+    <!--dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka_${scala.compat.version}</artifactId>
       <version>1.6.2</version>
-    </dependency>
+    </dependency-->
 
     <!-- ==== SPARK CSV ====================== -->
 
