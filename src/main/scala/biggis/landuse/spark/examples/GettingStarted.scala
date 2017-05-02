@@ -42,25 +42,34 @@ object GettingStarted extends LazyLogging {
         * and program arguments to
         *   target/geotrellis-catalog
         */
-      val path = "data/geotrellis-landsat-tutorial/"
-
-      def bandPath(b: String) = s"LC81070352015218LGN00_${b}.TIF"
-      val (layer_L8_B3_green, layer_L8_B4_red, layer_L8_B5_nir, layer_L8_BQA_clouds) =
-        ("layer_L8_B3_green", "layer_L8_B4_red", "layer_L8_B5_nir" ,"layer_L8_BQA_clouds")
-      val (file_L8_B3_green, file_L8_B4_red, file_L8_B5_nir, file_L8_BQA_clouds) =
-        ( bandPath("B3"), bandPath("B4"), bandPath("B5"), bandPath("BQA"))
+      //val path = "data/geotrellis-landsat-tutorial/"
+      //def bandPath(b: String) = s"LC81070352015218LGN00_${b}.TIF"
+      //val (layer_L8_B3_green, layer_L8_B4_red, layer_L8_B5_nir, layer_L8_BQA_clouds) =
+      //  ("layer_L8_B3_green", "layer_L8_B4_red", "layer_L8_B5_nir" ,"layer_L8_BQA_clouds")
+      //val (file_L8_B3_green, file_L8_B4_red, file_L8_B5_nir, file_L8_BQA_clouds) =
+      //  ( bandPath("B3"), bandPath("B4"), bandPath("B5"), bandPath("BQA"))
+      val path = "data/sentinel2-tutorial/"
+      def bandPath(b: String) = s"32_UMU_2016_5_5_0/${b}.TIF"
+      val (layer_S2_B02_blue, layer_S2_B03_green, layer_S2_B04_red, layer_S2_B08_nir) =
+        ("layer_S2_B02_blue","layer_S2_B03_green", "layer_S2_B04_red", "layer_S2_B08_nir")
+      val (file_S2_B02_blue, file_S2_B03_green, file_S2_B04_red, file_S2_B08_nir) =
+        ( bandPath("B02"), bandPath("B03"), bandPath("B04"), bandPath("B08"))
 
       // see: geotrellis-landsat-tutorial/src/main/scala/tutorial/IngestImage.scala
       // https://github.com/geotrellis/geotrellis-landsat-tutorial/blob/master/src/main/scala/tutorial/IngestImage.scala
       // replaced by GeotiffTilingExample
       //GeotiffTilingExample( path + file_L8_B3_green, layer_L8_B3_green)
-      GeotiffTilingExample( path + file_L8_B4_red, layer_L8_B4_red)
-      GeotiffTilingExample( path + file_L8_B5_nir, layer_L8_B5_nir)
-      GeotiffTilingExample( path + file_L8_BQA_clouds, layer_L8_BQA_clouds)
+      //GeotiffTilingExample( path + file_L8_B4_red, layer_L8_B4_red)
+      //GeotiffTilingExample( path + file_L8_B5_nir, layer_L8_B5_nir)
+      //GeotiffTilingExample( path + file_L8_BQA_clouds, layer_L8_BQA_clouds)
+      GeotiffTilingExample( path + file_S2_B04_red, layer_S2_B04_red)
+      GeotiffTilingExample( path + file_S2_B08_nir, layer_S2_B08_nir)
 
-      val layer_NDVI = "layer_NDVI"
+      //val layer_NDVI = "layer_NDVI"
       //NDVILayerExample( layer_L8_B5_nir, layer_L8_B4_red, layer_NDVI)
-      NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
+      //NDVILayerWithCloudMaskExample( layer_L8_B5_nir, layer_L8_B4_red, layer_L8_BQA_clouds, layer_NDVI)
+      val layer_NDVI = "layer_S2_NDVI"
+      NDVILayerExample( layer_S2_B08_nir, layer_S2_B04_red, layer_NDVI)
 
       /*
       * Attention: LayerToGeotiff export notes (stitching disabled by default)
