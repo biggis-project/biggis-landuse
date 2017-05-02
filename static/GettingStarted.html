@@ -14,8 +14,10 @@ body, #map {
 <script>
   var map = L.map('map');
 
-  <!-- map.setView([48.54258, 8.07666], 13); -->	
-  map.setView([36.0, 140.0], 13);
+  <!-- map.setView([48.54258, 8.07666], 13); -->	<!-- /* HeatStress Example */ -->
+  <!-- map.setView([36.0, 140.0], 13); --> <!-- /* Geotrellis Landsat Tutorial (Japan) */ -->
+  map.setView([48.5333, 8.0639], 13);   <!-- /* Oberkirch, BW Prio1 */ -->
+  <!-- map.setView([49.0, 8.38], 13); --> <!-- /* Karlsruhe */ -->
 
   new L.tileLayer("http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png").addTo(map);
 
