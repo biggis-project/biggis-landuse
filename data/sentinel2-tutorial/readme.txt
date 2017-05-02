@@ -24,6 +24,14 @@ wget http://sentinel-s2-l1c.s3.amazonaws.com/tiles/32/U/MU/2016/5/5/0/B04.jp2
 wget http://sentinel-s2-l1c.s3.amazonaws.com/tiles/32/U/MU/2016/5/5/0/B08.jp2
 cd ..
 
+#sudo apt-get install gdal-bin
+cd 32_UMU_2016_5_5_0
+#gdal_translate B02.jp2 B02.TIF
+#gdal_translate B03.jp2 B03.TIF
+gdal_translate B04.jp2 B04.TIF
+gdal_translate B08.jp2 B08.TIF
+cd ..
+
 mkdir 32_UMU_2016_6_24_1
 cd 32_UMU_2016_6_24_1
 wget http://sentinel-s2-l1c.s3.amazonaws.com/tiles/32/U/MU/2016/6/24/1/B02.jp2
@@ -57,6 +65,13 @@ wget http://sentinel-s2-l1c.s3.amazonaws.com/tiles/32/T/LT/2016/5/5/0/B03.jp2
 wget http://sentinel-s2-l1c.s3.amazonaws.com/tiles/32/T/LT/2016/5/5/0/B04.jp2
 wget http://sentinel-s2-l1c.s3.amazonaws.com/tiles/32/T/LT/2016/5/5/0/B08.jp2
 cd ..
+
+#cd 32_TLT_2016_5_5_0
+#gdal_translate B02.jp2 B02.TIF
+#gdal_translate B03.jp2 B03.TIF
+#gdal_translate B04.jp2 B04.TIF
+#gdal_translate B08.jp2 B08.TIF
+#cd ..
 
 mkdir 32_TLT_2016_6_24_0
 cd 32_TLT_2016_6_24_0
