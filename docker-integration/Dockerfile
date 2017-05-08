@@ -30,16 +30,14 @@ WORKDIR ../
 RUN \
 	set -x && \
     apk --update add --virtual build-dependencies git && \
-	#mvn package && \
 	git clone "https://github.com/biggis-project/biggis-landuse" && \
 	wget -q "http://apache.ip-connect.vn.ua/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" && tar -xzf "apache-maven-$MAVEN_VERSION-bin.tar.gz" && \
-    mv "/apache-maven-$MAVEN_VERSION" "/usr/lib" && \
-	ls "/usr/lib/apache-maven-$MAVEN_VERSION" && \
-	ln -s "/usr/lib/apache-maven-$MAVEN_VERSION/bin/*" "/usr/bin/" && \
+	cd "/biggis-landuse" && \
+	"/apache-maven-$MAVEN_VERSION/bin/mvn" package && \
 	apk del build-dependencies && \
     rm -rf /var/cache/apk/* && \
 	ls && \
-	/usr/bin/mvn package && \
+	echo "Successfull Build"
 	
 # COPY ../target/${SNAPSHOT_ARCHIVE} .
 
