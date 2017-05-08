@@ -1,14 +1,14 @@
-###Usage:
+### Usage:
 ```
 docker build -t biggis/biggis-landuse:0.0.2 .
 ```
 
-###Check:
+### Check:
 ```
 docker images
 ```
 
-###Start:
+### Start:
 ```
 docker run biggis/biggis-landuse:0.0.2
 ```
