@@ -23,20 +23,30 @@ LABEL eu.biggis-project.build-date=$BUILD_DATE \
       eu.biggis-project.environment="dev" \
       eu.biggis-project.version=$SNAPSHOT_VERSION
 
-ENV SNAPSHOT_ARCHIVE biggis-landuse-${SNAPSHOT_VERSION}.jar
+ENV SNAPSHOT_ARCHIVE biggis-landuse-${SNAPSHOT_VERSION}-SNAPSHOT.jar
 
-WORKDIR ../
+WORKDIR /
 
 RUN \
 	set -x && \
     apk --update add --virtual build-dependencies git && \
 	git clone "https://github.com/biggis-project/biggis-landuse" && \
 	wget -q "http://apache.ip-connect.vn.ua/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" && tar -xzf "apache-maven-$MAVEN_VERSION-bin.tar.gz" && \
+	rm "apache-maven-$MAVEN_VERSION-bin.tar.gz" && \
 	cd "/biggis-landuse" && \
 	"/apache-maven-$MAVEN_VERSION/bin/mvn" package && \
+	rm -rf "apache-maven-$MAVEN_VERSION-bin" && \
 	apk del build-dependencies && \
     rm -rf /var/cache/apk/* && \
-	ls && \
+	mv "/biggis-landuse/target/$SNAPSHOT_ARCHIVE" "/" && \
+    mkdir "/geotrellis-catalog" && \
+    mkdir "/data" && \
+    mkdir "/data/geotrellis-landsat-tutorial" && \
+    mv "/biggis-landuse/data/geotrellis-landsat-tutorial/readme.txt" "/data/geotrellis-landsat-tutorial/readme.sh" && \
+    #mv "/biggis-landuse/data/.*" "/data" && \
+    #mkdir "/static" && mv "/biggis-landuse/static/.*" "/static" && \
+    #rm -rf "/biggis-landuse" && \
+    ls && \
 	echo "Successfull Build"
 	
 # COPY ../target/${SNAPSHOT_ARCHIVE} .
