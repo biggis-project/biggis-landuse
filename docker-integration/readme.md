@@ -13,7 +13,7 @@ docker images
 docker save biggis/biggis-landuse:0.0.2-SNAPSHOT -o biggis-landuse-0.0.2-SNAPSHOT.tar
 ```
 
-### Start:
+### Start (e.g. GettingStarted Example):
 ```
-docker run biggis/biggis-landuse:0.0.2-SNAPSHOT
+docker run -t biggis/biggis-landuse:0.0.2-SNAPSHOT java -cp biggis-landuse/target/biggis-landuse-0.0.2-SNAPSHOT.jar biggis.landuse.spark.examples.GettingStarted
 ```
