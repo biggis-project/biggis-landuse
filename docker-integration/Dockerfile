@@ -27,6 +27,8 @@ ENV SNAPSHOT_ARCHIVE biggis-landuse-${SNAPSHOT_VERSION}-SNAPSHOT.jar
 
 WORKDIR /
 
+#VOLUME /data
+
 RUN \
 	set -x && \
     apk --update add --virtual build-dependencies git && \
@@ -42,13 +44,16 @@ RUN \
     mkdir "/geotrellis-catalog" && \
     mkdir "/data" && \
     mkdir "/data/geotrellis-landsat-tutorial" && \
-    mv "/biggis-landuse/data/geotrellis-landsat-tutorial/readme.txt" "/data/geotrellis-landsat-tutorial/readme.sh" && \
+    mv "/biggis-landuse/data/geotrellis-landsat-tutorial/readme.txt" "/data/geotrellis-landsat-tutorial/readme.sh" && chmod u+x "/data/geotrellis-landsat-tutorial/readme.sh" && \
     #mv "/biggis-landuse/data/.*" "/data" && \
     #mkdir "/static" && mv "/biggis-landuse/static/.*" "/static" && \
     #rm -rf "/biggis-landuse" && \
+    #rm -rf "apache-maven-$MAVEN_VERSION" && \
     ls && \
 	echo "Successfull Build"
 	
 # COPY ../target/${SNAPSHOT_ARCHIVE} .
 
-RUN ls
+#RUN ls
+
+#CMD java "-Dspark.master=local[*]" -Xmx2g -cp biggis-landuse-0.0.2-SNAPSHOT.jar biggis.landuse.spark.examples.GettingStarted geotrellis-catalog
