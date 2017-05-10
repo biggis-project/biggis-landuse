@@ -27,7 +27,7 @@ ENV SNAPSHOT_ARCHIVE biggis-landuse-${SNAPSHOT_VERSION}-SNAPSHOT.jar
 
 WORKDIR /
 
-#VOLUME /data
+VOLUME /data
 
 RUN \
 	set -x && \
@@ -42,13 +42,13 @@ RUN \
     rm -rf /var/cache/apk/* && \
 	mv "/biggis-landuse/target/$SNAPSHOT_ARCHIVE" "/" && \
     mkdir "/geotrellis-catalog" && \
-    mkdir "/data" && \
-    mkdir "/data/geotrellis-landsat-tutorial" && \
-    mv "/biggis-landuse/data/geotrellis-landsat-tutorial/readme.txt" "/data/geotrellis-landsat-tutorial/readme.sh" && chmod u+x "/data/geotrellis-landsat-tutorial/readme.sh" && \
+    #mkdir "/data" && \
+    mkdir "/geotrellis-landsat-tutorial" && \
+    mv "/biggis-landuse/data/geotrellis-landsat-tutorial/readme.txt" "/geotrellis-landsat-tutorial/readme.sh" && chmod u+x "/geotrellis-landsat-tutorial/readme.sh" && \
     #mv "/biggis-landuse/data/.*" "/data" && \
     #mkdir "/static" && mv "/biggis-landuse/static/.*" "/static" && \
-    #rm -rf "/biggis-landuse" && \
-    #rm -rf "apache-maven-$MAVEN_VERSION" && \
+    rm -rf "/biggis-landuse" && \
+    rm -rf "/apache-maven-$MAVEN_VERSION" && \
     ls && \
 	echo "Successfull Build"
 	

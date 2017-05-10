@@ -30,5 +30,5 @@ docker volume ls
 docker ps -a
 # clean up containers:
 docker rm $(docker ps -q --filter "status=exited")
-$(docker images -q --filter "dangling=true")
+docker rmi $(docker images -q --filter "dangling=true")
 ```
