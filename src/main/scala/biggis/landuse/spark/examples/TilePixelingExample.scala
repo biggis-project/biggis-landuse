@@ -74,6 +74,18 @@ object TilePixelingExample extends LazyLogging {
       [ZK quorum], [consumer group id], [per-topic number of Kafka partitions to consume])
     */
 
+    /*  // Use UtilsKafka & UtilsSVM to create Kafka Stream from samples
+    val (brokers, topic) = ("localhost:9092","neu")
+    UtilsKafka.initKafka(topic)(brokers)
+    val messages : Array[String] = UtilsSVM.toKafkaString(samples, UtilsSVM.Delimiter(";")).toLocalIterator.toArray
+    val nmsg : Int = messages.length
+    logger debug s"messages $nmsg"
+    for ( imsg <- 0 until nmsg ){
+      val str = messages(imsg)
+      UtilsKafka.send(str)
+    }
+    */
+
     // ToDo: Spark Streaming read from Kafka queue
 
     // Label (ClassId) of Pixel Samples => Tile
