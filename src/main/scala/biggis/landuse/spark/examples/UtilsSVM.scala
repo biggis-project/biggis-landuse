@@ -287,4 +287,15 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     //val data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] = ()
     //data
   }
+
+  def toKafkaString( samples : RDD[(SpatialKey, (Int, Int, LabeledPoint))], delimiter: Delimiter = Delimiter(";")) : RDD[(String)] = {
+    samples
+      .filter( samples => samples._2._3.features.numNonzeros > 0) //Avoid NoData
+      .map( sample => {
+      val (key, (x,y, lp)) : (SpatialKey, (Int, Int, LabeledPoint)) = sample
+      val str = UtilsSVM.LabeledPointWithKeyToString(sample)(delimiter)
+      str
+    }
+    )
+  }
 }
