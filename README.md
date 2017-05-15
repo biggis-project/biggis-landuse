@@ -9,7 +9,7 @@ Land use update detection based on Geotrellis and Spark
 mvn package
 
 # now we can run the example app
-java -cp target/biggis-landuse-0.0.2-SNAPSHOT.jar \
+java -cp target/biggis-landuse-0.0.3-SNAPSHOT.jar \
   biggis.landuse.spark.examples.GeotiffToPyramid \
   /path/to/raster.tif \
   new_layer_name \
