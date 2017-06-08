@@ -16,6 +16,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
+import org.apache.spark.ml.feature.StandardScaler
 
 /**
   * Renamed by ak on 26.01.2017.
@@ -297,5 +298,46 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
       str
     }
     )
+  }
+
+  def NormalizeMultibandTile( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
+    val normalizedtiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+      data
+        .withContext { rdd => {
+          val (band_min, band_max): (Array[Double], Array[Double]) = {
+            rdd.map( mbtile => {
+              val (key, tile) = mbtile
+              var local_band_min: List[Double] = List[Double]()//Array[Double] = Array[Double](nbands)
+              var local_band_max: List[Double] = List[Double]()//Array[Double] = Array[Double](nbands)
+              tile.bands.foreach(band => {
+                val (min, max) = band.findMinMaxDouble
+                local_band_min = local_band_min ++ List[Double](min)
+                local_band_max = local_band_max ++ List[Double](max)
+              })
+              (local_band_min.toArray[Double],local_band_max.toArray[Double])
+            })
+              .reduce( (left, right) => {
+                val (left_min,left_max) = left
+                val (right_min,right_max) = right
+                val nbands = left_min.size
+                var zonal_band_min: Array[Double] = Array.fill[Double](nbands)(Double.MaxValue)
+                var zonal_band_max: Array[Double] = Array.fill[Double](nbands)(Double.MinValue)
+                for(i <- 0 until nbands){
+                  zonal_band_min.update(i,Math.min(left_min(i),right_min(i)))
+                  zonal_band_max.update(i,Math.max(left_max(i),right_max(i)))
+                }
+                (zonal_band_min,zonal_band_max)
+              })
+          }
+          rdd
+            .mapValues { tile => {
+              tile.mapBands { case (i, band) =>
+                  band.normalize(band_min(i),band_max(i),0.0,1.0)
+                }
+            }
+            }
+        }
+        }
+    normalizedtiles
   }
 }
