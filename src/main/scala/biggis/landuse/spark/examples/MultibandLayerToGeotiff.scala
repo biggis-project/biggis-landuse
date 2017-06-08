@@ -33,7 +33,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
     }
   }
 
-  def apply(layerName: String, outputPath: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
+  def apply(layerName: String, outputPath: String, useStitching: Boolean = false)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Writing layer '$layerName' in catalog '$catalogPath' to '$outputPath'"
 
     //implicit val sc = Utils.initSparkContext
@@ -107,21 +107,35 @@ object MultibandLayerToGeotiff extends LazyLogging{
       metadata.bounds)
     // */
 
-    // ToDo: replace "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
-    val outputRdd:RDD[(SpatialKey, MultibandTile)] = inputRdd
+    if(useStitching){
+      // one single GeoTiff, but attention
+      val tiled: RDD[(SpatialKey, MultibandTile)] = inputRdd
+      val tile: MultibandTile = tiled.distinct().stitch()
+      if( crs.epsgCode.get==3857){   //"WebMercator"
+        val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
+        MultibandGeoTiff(raster.tile, raster.extent, crs).write(outputPath)
+      } else {
+        val layoutextent: Extent = metadata.layoutExtent
+        MultibandGeoTiff(tile, layoutextent, crs).write(outputPath)  //for UTM32
+      }
+    } else {
+      // many GeoTiff tiles
+      // ToDo: replace "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
+      val outputRdd: RDD[(SpatialKey, MultibandTile)] = inputRdd
       //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
       //.repartition(Utils.RDD_PARTITIONS)
       //.repartition(myRDD_PARTITIONS)
       //.tileToLayout(myMetadata.cellType, myMetadata.layout, myRESAMPLING_METHOD)
 
-      outputRdd.foreach (mbtile => {
+      outputRdd.foreach(mbtile => {
         val (key, tile) = mbtile
         val (col, row) = (key.col, key.row)
         val tileextent: Extent = metadata.layout.mapTransform(key)
-      MultibandGeoTiff(tile, tileextent, crs)
-        .write(outputPath + "_" + col + "_" + row + ".tif")
+        MultibandGeoTiff(tile, tileextent, crs)
+          .write(outputPath + "_" + col + "_" + row + ".tif")
+      }
+      )
     }
-    )
 
     ////val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
     //MultibandGeoTiff(tile, metadata.extent, crs).write(outputPath)
