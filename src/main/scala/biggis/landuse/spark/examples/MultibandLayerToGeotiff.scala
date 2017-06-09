@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.{Tile, withTileMethods}
 import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
 import geotrellis.spark.io.file.{FileAttributeStore, FileLayerManager, FileLayerReader, FileLayerWriter}
-import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
+import geotrellis.spark.io.{LayerHeader, SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import geotrellis.util._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -33,7 +33,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
     }
   }
 
-  def apply(layerName: String, outputPath: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
+  def apply(layerName: String, outputPath: String, useStitching: Boolean = false)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Writing layer '$layerName' in catalog '$catalogPath' to '$outputPath'"
 
     //implicit val sc = Utils.initSparkContext
@@ -51,8 +51,37 @@ object MultibandLayerToGeotiff extends LazyLogging{
     val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
     logger debug s"The following layerId will be used: $srcLayerId"
 
-    val inputRdd:RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReader
-      .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](srcLayerId)
+    /*
+    // ToDo: check if RDD is Tile or MultibandTile
+    val (srcLayerMetadata, srcLayerSchema) =
+    try {
+      (
+        layerReader.attributeStore
+          .readMetadata(id = srcLayerId) ,
+        layerReader.attributeStore
+          //.readSchema(id = srcLayerId)  //.getFields()
+            .readAll(layerName)
+      )
+    } catch {
+      case _: Throwable =>
+    }
+    */
+    val header = layerReader.attributeStore.readHeader[LayerHeader](srcLayerId)
+    //assert(header.keyClass == "geotrellis.spark.SpatialKey")
+    //assert(header.valueClass == "geotrellis.raster.Tile")
+
+    val inputRdd:RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+      if(header.valueClass == "geotrellis.raster.Tile") {
+        layerReader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](srcLayerId)
+          .withContext { rdd =>
+            rdd.map { case (spatialKey, tile) => (spatialKey, ArrayMultibandTile(tile)) }
+          }
+      }
+      else {
+        assert(header.valueClass == "geotrellis.raster.MultibandTile")
+        layerReader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](srcLayerId)
+      }
+
 
     val metadata = inputRdd.metadata
     val crs = metadata.crs
@@ -78,20 +107,35 @@ object MultibandLayerToGeotiff extends LazyLogging{
       metadata.bounds)
     // */
 
-    val outputRdd:RDD[(SpatialKey, MultibandTile)] = inputRdd
+    if(useStitching){
+      // one single GeoTiff, but attention
+      val tiled: RDD[(SpatialKey, MultibandTile)] = inputRdd
+      val tile: MultibandTile = tiled.distinct().stitch()
+      if( crs.epsgCode.get==3857){   //"WebMercator"
+        val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
+        MultibandGeoTiff(raster.tile, raster.extent, crs).write(outputPath)
+      } else {
+        val layoutextent: Extent = metadata.layoutExtent
+        MultibandGeoTiff(tile, layoutextent, crs).write(outputPath)  //for UTM32
+      }
+    } else {
+      // many GeoTiff tiles
+      // ToDo: replace "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
+      val outputRdd: RDD[(SpatialKey, MultibandTile)] = inputRdd
       //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
       //.repartition(Utils.RDD_PARTITIONS)
       //.repartition(myRDD_PARTITIONS)
       //.tileToLayout(myMetadata.cellType, myMetadata.layout, myRESAMPLING_METHOD)
 
-      outputRdd.foreach (mbtile => {
+      outputRdd.foreach(mbtile => {
         val (key, tile) = mbtile
         val (col, row) = (key.col, key.row)
         val tileextent: Extent = metadata.layout.mapTransform(key)
-      MultibandGeoTiff(tile, tileextent, crs)
-        .write(outputPath + "_" + col + "_" + row + ".tif")
+        MultibandGeoTiff(tile, tileextent, crs)
+          .write(outputPath + "_" + col + "_" + row + ".tif")
+      }
+      )
     }
-    )
 
     ////val raster: Raster[MultibandTile] = tile.reproject(metadata.extent, metadata.crs, metadata.crs)
     //MultibandGeoTiff(tile, metadata.extent, crs).write(outputPath)
