@@ -299,10 +299,11 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     )
   }
 
-  def NormalizeMultibandTile( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
+  def NormalizeMultibandTile( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1)): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
     val normalizedtiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
       data
         .withContext { rdd => {
+          //find minMax per band
           val (band_min, band_max): (Array[Double], Array[Double]) = {
             rdd.map( mbtile => {
               val (key, tile) = mbtile
@@ -328,10 +329,12 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
                 (zonal_band_min,zonal_band_max)
               })
           }
+          //normalize
           rdd
             .mapValues { tile => {
               tile.convert(DoubleConstantNoDataCellType).mapBands { case (i, band) =>
-                  band.normalize(band_min(i),band_max(i),0.0,1.0)
+                if(classBandNo.classBandNo == i) band //do not normalize class band
+                else band.normalize(band_min(i),band_max(i),0.0,1.0)
                 }
             }
             }
