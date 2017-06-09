@@ -1,8 +1,7 @@
 package biggis.landuse.spark.examples
 
 import geotrellis.raster
-import geotrellis.raster.MultibandTile
-import geotrellis.raster.Tile
+import geotrellis.raster.{DoubleConstantNoDataCellType, MultibandTile, Tile}
 import geotrellis.spark.{Metadata, SpaceTimeKey, SpatialKey, TemporalKey, TileLayerMetadata}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.SparkContext
@@ -331,7 +330,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
           }
           rdd
             .mapValues { tile => {
-              tile.mapBands { case (i, band) =>
+              tile.convert(DoubleConstantNoDataCellType).mapBands { case (i, band) =>
                   band.normalize(band_min(i),band_max(i),0.0,1.0)
                 }
             }
