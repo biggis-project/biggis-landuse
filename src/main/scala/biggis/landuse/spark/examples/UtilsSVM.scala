@@ -352,7 +352,8 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
         var (local_band_min, local_band_max): (Array[Double], Array[Double]) = (Array[Double](), Array[Double]())
         tile.bands.foreach(band => {
           val (min, max) = band.findMinMaxDouble
-          (local_band_min, local_band_max) = (local_band_min ++ Array[Double](min), local_band_max ++ Array[Double](max))
+          local_band_min = local_band_min ++ Array[Double](min)
+          local_band_max = local_band_max ++ Array[Double](max)
         })
         (local_band_min,local_band_max)
       })
