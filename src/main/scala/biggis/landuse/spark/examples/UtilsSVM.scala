@@ -304,7 +304,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
       data
         .withContext { rdd => {
           //find minMax per band
-          val (band_min, band_max): (Array[Double], Array[Double]) = {
+          val (band_min, band_max): (Array[Double], Array[Double]) = /*{
             rdd.map( mbtile => {
               val (key, tile) = mbtile
               var local_band_min: List[Double] = List[Double]()//Array[Double] = Array[Double](nbands)
@@ -328,7 +328,8 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
                 }
                 (zonal_band_min,zonal_band_max)
               })
-          }
+          }*/
+          findMinMaxDoubleMultiband(rdd)
           //normalize
           rdd
             .mapValues { tile => {
@@ -341,5 +342,31 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
         }
         }
     normalizedtiles
+  }
+
+  def findMinMaxDoubleMultiband( rdd: RDD[(SpatialKey,MultibandTile)]) : (Array[Double],Array[Double]) = {
+    //find minMax per band
+    val (band_min, band_max): (Array[Double], Array[Double]) = {
+      rdd.map( mbtile => {
+        val (key, tile) = mbtile
+        var (local_band_min, local_band_max): (Array[Double], Array[Double]) = (Array[Double](), Array[Double]())
+        tile.bands.foreach(band => {
+          val (min, max) = band.findMinMaxDouble
+          (local_band_min, local_band_max) = (local_band_min ++ Array[Double](min), local_band_max ++ Array[Double](max))
+        })
+        (local_band_min,local_band_max)
+      })
+        .reduce( (left, right) => {
+          val ((left_min,left_max),(right_min,right_max)) = (left, right)
+          val nbands = left_min.size
+          var (zonal_band_min,zonal_band_max): (Array[Double],Array[Double]) = (Array.fill[Double](nbands)(Double.MaxValue),Array.fill[Double](nbands)(Double.MinValue))
+          for(i <- 0 until nbands){
+            zonal_band_min.update(i,Math.min(left_min(i),right_min(i)))
+            zonal_band_max.update(i,Math.max(left_max(i),right_max(i)))
+          }
+          (zonal_band_min,zonal_band_max)
+        })
+    }
+    (band_min,band_max)
   }
 }
