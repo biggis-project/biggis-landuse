@@ -23,9 +23,13 @@ import org.apache.hadoop.fs.Path
 object MultibandLayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {
-      val Array(layerName, outputPath, catalogPath) = args
+      //val Array(layerName, outputPath, catalogPath) = args
+      val (layerNameArray,Array(outputPath, catalogPath)) = (args.take(args.size - 2),args.drop(args.size - 2))
+      val (layerName: String, zoomLevel: Int) =
+        if(layerNameArray.size == 2) layerNameArray
+        else if (layerNameArray.size == 1) (layerNameArray(0),-1)
       implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
-      MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc)
+      MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc, zoomLevel)
       sc.stop()
       logger debug "Spark context stopped"
     } catch {
@@ -33,7 +37,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
     }
   }
 
-  def apply(layerName: String, outputPath: String, useStitching: Boolean = false)(implicit catalogPath: String, sc: SparkContext): Unit = {
+  def apply(layerName: String, outputPath: String, useStitching: Boolean = false)(implicit catalogPath: String, sc: SparkContext, zoomLevel: Int = -1): Unit = {
     logger info s"Writing layer '$layerName' in catalog '$catalogPath' to '$outputPath'"
 
     //implicit val sc = Utils.initSparkContext
@@ -48,7 +52,18 @@ object MultibandLayerToGeotiff extends LazyLogging{
       return
     }
 
-    val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
+    val srcLayerId =
+      if(zoomLevel < 0) zoomsOfLayer.sortBy(_.zoom).last
+      else {
+        val zoomLevels = zoomsOfLayer.filter(_.zoom == zoomLevel)
+        if (zoomLevels.size == 1) zoomLevels.last
+        else {
+          logger info s"Layer '$layerName' with zoom '$zoomLevel' not found in the catalog '$catalogPath'"
+          return
+        }
+      }
+
+    //val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
     logger debug s"The following layerId will be used: $srcLayerId"
 
     /*

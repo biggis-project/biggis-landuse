@@ -31,7 +31,7 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
-    <geotrellis.version>1.1.0-RC6</geotrellis.version>
+    <geotrellis.version>1.1.1</geotrellis.version>
     <spark.version>2.1.0</spark.version>
     <kafka.version>0.10.2.0</kafka.version>
   </properties>
