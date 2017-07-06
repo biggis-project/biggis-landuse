@@ -14,7 +14,7 @@ import com.vividsolutions.jts.{geom => jts}
   */
 object UtilsShape extends LazyLogging{
 
-  def readShapefileMultiPolygonIntAttribute(shapefileName: String, attribName: String): List[(MultiPolygon,Int)] = {
+  def readShapefileMultiPolygonIntAttribute(shapefileName: String, attribName: String): List[(MultiPolygon,Long)] = {
     ShapeFileReader.readSimpleFeatures(shapefileName)
       .filter { feat =>
         "MultiPolygon" != feat.getFeatureType.getGeometryDescriptor.getType.getName
@@ -24,9 +24,9 @@ object UtilsShape extends LazyLogging{
       }
   }
 
-  def getExtent(mps : List[(MultiPolygon,Int)]) : Extent = {
+  def getExtent(mps : List[(MultiPolygon,Long)]) : Extent = {
     mps
-      .map{ case (mp: MultiPolygon,_ : Int) => mp.envelope }
+      .map{ case (mp: MultiPolygon,_ : Long) => mp.envelope }
       .reduce( (a,b) =>
         Extent(
           Math.min(a.xmin, b.xmin),
