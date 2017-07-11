@@ -21,9 +21,9 @@ object RasterizeFeaturesRDD {
    * @param options Rasterizer options for cell intersection rules
    * @param partitioner Partitioner for result RDD
    */
-  def fromFeature[G <: Geometry, T : Numeric](
+  def fromFeature[G <: Geometry, D <: Double](
     //geoms: RDD[G], value: Double,
-    features: RDD[(G,T)],
+    features: RDD[(G,D)],
     cellType: CellType,
     layout: LayoutDefinition,
     options: Rasterizer.Options = Rasterizer.Options.DEFAULT,
@@ -33,7 +33,7 @@ object RasterizeFeaturesRDD {
     val layoutRasterizerOptions = Rasterizer.Options(includePartial=true, sampleType=PixelIsArea)
 
     /** Key geometry by spatial keys of intersecting tiles */
-    def keyGeom(feature: (Geometry, T)): Iterator[(SpatialKey, ((Geometry, T), SpatialKey))] = {
+    def keyGeom(feature: (Geometry, Double)): Iterator[(SpatialKey, ((Geometry,Double), SpatialKey))] = {
       var keySet = Set.empty[SpatialKey]
       feature._1.foreach(layoutRasterExtent, layoutRasterizerOptions){ (col, row) =>
         keySet = keySet + SpatialKey(col, row)
@@ -42,21 +42,21 @@ object RasterizeFeaturesRDD {
     }
 
     // key the geometry to intersecting tiles so it can be rasterized in the map-side combine
-    val keyed: RDD[(SpatialKey, ((Geometry, T), SpatialKey))] =
+    val keyed: RDD[(SpatialKey, ((Geometry, Double), SpatialKey))] =
       features.flatMap { case (geom,value) => keyGeom(geom, value) }
 
-    val createTile = (tup: ((Geometry, T), SpatialKey)) => {
+    val createTile = (tup: ((Geometry, Double), SpatialKey)) => {
       val ((geom,value), key) = tup
       val tile = ArrayTile.empty(cellType, layout.tileCols, layout.tileRows)
       val re = RasterExtent(layout.mapTransform(key), layout.tileCols, layout.tileRows)
-      geom.foreach(re, options){ tile.setDouble(_, _, value.toString.toDouble) }
+      geom.foreach(re, options){ tile.setDouble(_, _, value) }
       tile: MutableArrayTile
     }
 
-    val updateTile = (tile: MutableArrayTile, tup: ((Geometry, T), SpatialKey)) => {
+    val updateTile = (tile: MutableArrayTile, tup: ((Geometry, Double), SpatialKey)) => {
       val ((geom,value), key) = tup
       val re = RasterExtent(layout.mapTransform(key), layout.tileCols, layout.tileRows)
-      geom.foreach(re, options){ tile.setDouble(_, _, value.toString.toDouble) }
+      geom.foreach(re, options){ tile.setDouble(_, _, value) }
       tile: MutableArrayTile
     }
 
