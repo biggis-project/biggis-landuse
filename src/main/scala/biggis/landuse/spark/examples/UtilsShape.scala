@@ -3,7 +3,7 @@ package biggis.landuse.spark.examples
 import geotrellis.util.LazyLogging
 import geotrellis.shapefile.ShapeFileReader
 import geotrellis.shapefile.ShapeFileReader.SimpleFeatureWrapper
-import geotrellis.vector.{Extent, MultiPolygon}
+import geotrellis.vector.{Extent, MultiPolygon, Feature}
 import org.opengis.feature.simple.{SimpleFeature, SimpleFeatureType}
 
 import scala.collection.JavaConverters._
@@ -14,22 +14,22 @@ import com.vividsolutions.jts.{geom => jts}
   */
 object UtilsShape extends LazyLogging{
 
-  def readShapefileMultiPolygonLongAttribute(shapefileName: String, attribName: String): List[(MultiPolygon,Long)] = {
+  def readShapefileMultiPolygonLongAttribute(shapefileName: String, attribName: String): List[Feature[MultiPolygon,Long]] = {
     ShapeFileReader.readSimpleFeatures(shapefileName)
       .filter { feat =>
         "MultiPolygon" != feat.getFeatureType.getGeometryDescriptor.getType.getName
       }
       .map { feat =>
-        (MultiPolygon.jts2MultiPolygon(feat.geom[jts.MultiPolygon].get), feat.attribute(attribName))
+        Feature(MultiPolygon.jts2MultiPolygon(feat.geom[jts.MultiPolygon].get), feat.attribute(attribName))
       }
   }
 
-  def readShapefileMultiPolygonDoubleAttribute(shapefileName: String, attribName: String): List[(MultiPolygon,Double)] = {
-    readShapefileMultiPolygonLongAttribute(shapefileName, attribName).map{ case (mp: MultiPolygon, value: Long)  => (mp,value.toDouble) }
+  def readShapefileMultiPolygonDoubleAttribute(shapefileName: String, attribName: String): List[Feature[MultiPolygon,Double]] = {
+    readShapefileMultiPolygonLongAttribute(shapefileName, attribName).map{ feature  => Feature(feature.geom,feature.data.toDouble) }
   }
-  def getExtent(mps : List[(MultiPolygon,Any)]) : Extent = {
+  def getExtent(mps : List[Feature[MultiPolygon,Any]]) : Extent = {
     mps
-      .map{ case (mp: MultiPolygon,_ : Any) => mp.envelope }
+      .map{ feature => feature.geom.envelope }
       .reduce( (a,b) =>
         Extent(
           Math.min(a.xmin, b.xmin),
