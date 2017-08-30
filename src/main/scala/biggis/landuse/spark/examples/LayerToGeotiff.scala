@@ -1,6 +1,5 @@
 package biggis.landuse.spark.examples
 
-import biggis.landuse.spark.examples.ShapefilePolygonRasterizer.logger
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.Tile
 import geotrellis.raster._
