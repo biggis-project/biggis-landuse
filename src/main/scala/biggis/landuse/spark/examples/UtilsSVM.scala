@@ -1,21 +1,16 @@
 package biggis.landuse.spark.examples
 
-import geotrellis.raster
-import geotrellis.raster.{DoubleConstantNoDataCellType, MultibandTile, Tile}
-import geotrellis.spark.{Metadata, SpaceTimeKey, SpatialKey, TemporalKey, TileLayerMetadata}
+import geotrellis.raster.{DoubleConstantNoDataCellType, MultibandTile}
+import geotrellis.spark.{Metadata, SpatialKey, TileLayerMetadata}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.SparkContext
+import org.apache.spark.mllib.classification.SVMMultiClassOVAModel
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.classification.SVMMultiClassOVAModel
-import scala.util.Try
-import org.json4s._
 import org.json4s.JsonDSL._
+import org.json4s._
 import org.json4s.native.JsonMethods._
-import org.json4s.native.Serialization
-import org.apache.spark.ml.feature.StandardScaler
 
 /**
   * Renamed by ak on 26.01.2017.
@@ -279,7 +274,6 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
           .map( line => StringToLabeledPointWithKey(line)(delimiter))
         ToRDD(data.toIterator)
       }
-      data
     }
     catch {
       case _: Throwable =>
