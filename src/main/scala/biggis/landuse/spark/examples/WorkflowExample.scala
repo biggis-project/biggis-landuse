@@ -121,8 +121,8 @@ object WorkflowExample extends StrictLogging {
       MultibandGeotiffTilingExample(input_label, layer_label)
       MultibandGeotiffTilingExample(input_sat, layer_sat)
     } else { //Debugging (w/o WebMercator, uses original crs)
-      GeotiffToMultibandLayer(input_label, layer_label)
-      GeotiffToMultibandLayer(input_sat, layer_sat)
+      MultibandGeotiffToLayerNoReproj(input_label, layer_label)
+      MultibandGeotiffToLayerNoReproj(input_sat, layer_sat)
     }
 
     val labeled_layerstack = {

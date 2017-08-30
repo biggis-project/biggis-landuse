@@ -21,7 +21,7 @@ import org.apache.spark.{SparkContext, SparkException}
   * - histogram data are stored as an attribute in the catalog (into zoom level 0)
   */
 @deprecated("for debugging only (keeps original projection - no WebMercator)")
-object GeotiffToMultibandLayer extends LazyLogging {
+object MultibandGeotiffToLayerNoReproj extends LazyLogging {
 
   /**
     * Run as: /path/to/raster.tif some_layer /path/to/some/dir
@@ -30,7 +30,7 @@ object GeotiffToMultibandLayer extends LazyLogging {
     try {
       val Array(inputPath, layerName, catalogPath) = args
       implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
-      GeotiffToMultibandLayer(inputPath, layerName)(catalogPath, sc)
+      MultibandGeotiffToLayerNoReproj(inputPath, layerName)(catalogPath, sc)
       sc.stop()
       logger debug "Spark context stopped"
     } catch {
