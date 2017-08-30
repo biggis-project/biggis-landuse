@@ -58,13 +58,15 @@ object ConvolveLayerExample extends LazyLogging {
       .read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](srcLayerId)
 
     val focalKernel = Kernel.circle(circleKernelRadius, queryResult.metadata.cellwidth, circleKernelRadius)
+    logger info s"extent of focalKernel is ${focalKernel.extent}"
 
     // here, the convolution takes place
+    // see also https://media.readthedocs.org/pdf/geotrellis/stable/geotrellis.pdf
     val convolvedLayerRdd = queryResult.withContext { rdd =>
       rdd
-        .bufferTiles(circleKernelRadius)
+        .bufferTiles(focalKernel.extent)
         .mapValues { v =>
-          v.tile.focalMean(focalKernel)
+          v.tile.focalMean(focalKernel, Some(v.targetArea))
         }
     }
 
