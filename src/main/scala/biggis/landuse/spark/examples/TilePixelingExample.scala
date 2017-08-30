@@ -34,22 +34,22 @@ object TilePixelingExample extends LazyLogging {
       TilePixelingExample(layerNameIn, layerNameOut)(catalogPath, sc)
       sc.stop()
     } catch {
-      case _: MatchError => println("Run as: layerName /path/to/catalog")
+      case _: MatchError => println("Run as: layerNameIn layerNameOut /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
-  def apply(layerName: String, layerNameOut: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
-    logger info s"Running pixeling of layer '$layerName' in catalog '$catalogPath'"
+  def apply(layerNameIn: String, layerNameOut: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
+    logger info s"Running pixeling of layer '$layerNameIn' in catalog '$catalogPath'"
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(catalogPathHdfs)
     val layerReader = HadoopLayerReader(attributeStore)
 
-    val zoomsOfLayer = attributeStore.layerIds filter (_.name == layerName)
+    val zoomsOfLayer = attributeStore.layerIds filter (_.name == layerNameIn)
     if (zoomsOfLayer.isEmpty) {
-      logger info s"Layer '$layerName' not found in the catalog '$catalogPath'"
+      logger info s"Layer '$layerNameIn' not found in the catalog '$catalogPath'"
       return
     }
 
