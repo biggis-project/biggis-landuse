@@ -6,22 +6,12 @@ import geotrellis.raster.withTileMethods
 import geotrellis.spark.LayerId
 import geotrellis.spark.TileLayerMetadata
 import geotrellis.spark.TileLayerRDD
-import geotrellis.spark.io.SpatialKeyFormat
-import geotrellis.spark.io.hadoop.HadoopAttributeStore
-import geotrellis.spark.io.hadoop.HadoopLayerDeleter
-import geotrellis.spark.io.hadoop.HadoopLayerWriter
 import geotrellis.spark.io.hadoop.HadoopSparkContextMethodsWrapper
-import geotrellis.spark.io.index.ZCurveKeyIndexMethod
-import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
-import geotrellis.spark.io.spatialKeyAvroFormat
-import geotrellis.spark.io.tileLayerMetadataFormat
-import geotrellis.spark.io.tileUnionCodec
 import geotrellis.spark.tiling.FloatingLayoutScheme
 import geotrellis.spark.tiling.ZoomedLayoutScheme
 import geotrellis.spark.withProjectedExtentTilerKeyMethods
 import geotrellis.spark.withTileRDDReprojectMethods
 import geotrellis.spark.withTilerMethods
-import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkException
 
@@ -69,24 +59,7 @@ object GeotiffTilingExample extends LazyLogging {
     val (zoom, reprojected) =
       TileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, Utils.RESAMPLING_METHOD)
 
-    // Create the attributes store that will tell us information about our catalog.
-    val catalogPathHdfs = new Path(catalogPath)
-    val attributeStore = HadoopAttributeStore(catalogPathHdfs)
-
-    // Create the writer that we will use to store the tiles in the local catalog.
-    val writer = HadoopLayerWriter(catalogPathHdfs, attributeStore)
-    val layerId = LayerId(layerName, zoom)
-
-    // If the layer exists already, delete it out before writing
-    if (attributeStore.layerExists(layerId)) {
-      logger debug s"Layer $layerId already exists, deleting ..."
-      HadoopLayerDeleter(attributeStore).delete(layerId)
-    }
-
-    logger debug "Writing reprojected tiles using space filling curve"
-    writer.write(layerId, reprojected, ZCurveKeyIndexMethod)
-
-    Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
+    biggis.landuse.api.writeRddToLayer(reprojected, LayerId(layerName, zoom))
 
     //sc.stop()
     logger info "done."

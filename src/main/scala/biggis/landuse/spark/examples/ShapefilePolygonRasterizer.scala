@@ -10,15 +10,8 @@ import geotrellis.spark.Metadata
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.TileLayerMetadata
 import geotrellis.spark.TileLayerRDD
-import geotrellis.spark.io.SpatialKeyFormat
 import geotrellis.spark.io.hadoop.HadoopAttributeStore
-import geotrellis.spark.io.hadoop.HadoopLayerDeleter
 import geotrellis.spark.io.hadoop.HadoopLayerWriter
-import geotrellis.spark.io.index.ZCurveKeyIndexMethod
-import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
-import geotrellis.spark.io.spatialKeyAvroFormat
-import geotrellis.spark.io.tileLayerMetadataFormat
-import geotrellis.spark.io.tileUnionCodec
 import geotrellis.spark.rasterize.RasterizeFeaturesRDD
 import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.util.LazyLogging
@@ -34,7 +27,7 @@ object ShapefilePolygonRasterizer extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(shapefilePath, attribName, layerName, catalogPath) = args
-      implicit val sc:SparkContext = Utils.initSparkContext
+      implicit val sc: SparkContext = Utils.initSparkContext
       ShapefilePolygonRasterizer(shapefilePath, attribName, layerName)(catalogPath, sc)
       sc.stop()
     } catch {
@@ -72,8 +65,6 @@ object ShapefilePolygonRasterizer extends LazyLogging {
 
     val zoom = 15 // TODO how to automatically/manually select the right zoom level
     //    val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
-    val dstLayerId = LayerId(layerName, zoom)
-    logger debug s"The following layerId will be used for writing rastertized shapefile: $dstLayerId"
 
     val multipolygonsRdd = sc.parallelize(multipolygons)
     val rasterizedRDD: RDD[(SpatialKey, Tile)] with Metadata[LayoutDefinition] = RasterizeFeaturesRDD
@@ -86,14 +77,12 @@ object ShapefilePolygonRasterizer extends LazyLogging {
     val rasterizedRDDwithContext: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] =
       TileLayerRDD(rasterizedRDD, myTileLayerMetadata)
 
-    // If the layer exists already, delete it out before writing
-    if (attributeStore.layerExists(dstLayerId)) {
-      logger warn s"Layer $dstLayerId already exists, deleting ..."
-      HadoopLayerDeleter(attributeStore).delete(dstLayerId)
-    }
+    val dstLayerId = LayerId(layerName, zoom)
+    logger debug s"The following layerId will be used for writing rastertized shapefile: $dstLayerId"
 
-    layerWriter.write(dstLayerId, rasterizedRDDwithContext, ZCurveKeyIndexMethod)
+    biggis.landuse.api.deleteLayerFromCatalog(dstLayerId)
+    biggis.landuse.api.writeRddToLayer(rasterizedRDDwithContext, dstLayerId)
 
-    logger info "shapefile rasterization done"
+    logger info "shapefile rasterization finished"
   }
 }

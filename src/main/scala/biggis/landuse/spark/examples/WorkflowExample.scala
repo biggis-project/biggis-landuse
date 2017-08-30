@@ -1,7 +1,8 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.StrictLogging
-import org.apache.spark.{SparkContext, SparkException}
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkException
 
 /**
   * Created by ak on 15.02.2017.
@@ -25,11 +26,11 @@ object WorkflowExample extends StrictLogging {
     // ToDo: generally replace SpatialKey by SpaceTimeKey, handle timestamp metadata
 
     // Settings (for Debugging)
-    val useDebugLayerExport = false  //for debugging only
+    val useDebugLayerExport = false //for debugging only
     val useLayerstackExport = false
     val useResultExport = false
     val useCleanup = true
-    val useWebMercator = true  //disabled - use original resolution for csv export
+    val useWebMercator = true //disabled - use original resolution for csv export
     val useLeaflet = false
 
     // ToDo: configure local paths
@@ -94,19 +95,19 @@ object WorkflowExample extends StrictLogging {
     //val input_sat = inputdir + "sat_4"
 
     val output_result = outputdir + "result.tif"
-    val output_labeled_layerstack =  outputdir + "labeled_layerstack.tif"
+    val output_labeled_layerstack = outputdir + "labeled_layerstack.tif"
 
     //val fileNameCSV = catalogPath + "/" + labeled_layerstack + "_withkey" + ".csv"
     //val fileNameCSV =  outputdir + tile_id + "_2m" + ".csv"
     val fileNameCSV =
-    if(useWebMercator) {
+    if (useWebMercator) {
       outputdir + "dop__prio1_epsg3857_zoom17" + ".csv"
       //outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
       //outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
       //outputdir + "32_UMU_2016_8_13_0_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
       //outputdir + "32_UMU_2016_8_23_0_S2_10m_2B_3G_4R_8NIR_epsg3857_zoom17" + ".csv"
     }
-    else{
+    else {
       outputdir + "dop__prio1__2m" + ".csv"
       //outputdir + "32_UMU_2016_5_5_0_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
       //outputdir + "32_UMU_2016_6_24_1_S2_10m_2B_3G_4R_8NIR_prio1_2m" + ".csv"
@@ -117,7 +118,7 @@ object WorkflowExample extends StrictLogging {
 
     val (layer_label, layer_sat) =
       ("layer_label", "layer_sat")
-    if(useWebMercator){
+    if (useWebMercator) {
       MultibandGeotiffTilingExample(input_label, layer_label)
       MultibandGeotiffTilingExample(input_sat, layer_sat)
     } else { //Debugging (w/o WebMercator, uses original crs)
@@ -126,23 +127,23 @@ object WorkflowExample extends StrictLogging {
     }
 
     val labeled_layerstack = {
-        val layer_label_sat = "layer_label_sat"
-        ManyLayersToMultibandLayer(layer_label,  layer_sat,  layer_label_sat)
-        layer_label_sat
-      }
-
-    if(useDebugLayerExport){
-      val output_labeled_layerstack =  outputdir + "debugging/" + "labeled_layerstack.tif"
-      MultibandLayerToGeotiff(layer_label, output_labeled_layerstack+".label.tif")
-      MultibandLayerToGeotiff(layer_sat, output_labeled_layerstack+".layer.tif")
+      val layer_label_sat = "layer_label_sat"
+      ManyLayersToMultibandLayer(layer_label, layer_sat, layer_label_sat)
+      layer_label_sat
     }
 
-    if(useCleanup){
-      DeleteLayer(layer_label)
-      DeleteLayer(layer_sat)
+    if (useDebugLayerExport) {
+      val output_labeled_layerstack = outputdir + "debugging/" + "labeled_layerstack.tif"
+      MultibandLayerToGeotiff(layer_label, output_labeled_layerstack + ".label.tif")
+      MultibandLayerToGeotiff(layer_sat, output_labeled_layerstack + ".layer.tif")
     }
 
-    if(useLayerstackExport){
+    if (useCleanup) {
+      biggis.landuse.api.deleteLayerFromCatalog(layer_label)
+      biggis.landuse.api.deleteLayerFromCatalog(layer_sat)
+    }
+
+    if (useLayerstackExport) {
       MultibandLayerToGeotiff(labeled_layerstack, output_labeled_layerstack)
     }
 
@@ -159,12 +160,12 @@ object WorkflowExample extends StrictLogging {
     // ToDo: store Result RDD als Hadoop Layer layer_result
 
     // Export Result to GeoTiff
-    if(useResultExport){
+    if (useResultExport) {
       LayerToGeotiff(layer_result, output_result)
     }
 
     // Visualize Result
-    if(useLeaflet && useWebMercator) {
+    if (useLeaflet && useWebMercator) {
       LayerToPyramid(catalogPath, layer_result)
       ServeLayerAsMap(catalogPath, layer_result)
     }

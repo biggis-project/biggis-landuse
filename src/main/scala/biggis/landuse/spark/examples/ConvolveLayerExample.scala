@@ -1,23 +1,19 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.mapalgebra.focal.Kernel
 import geotrellis.raster.Tile
+import geotrellis.raster.mapalgebra.focal.Kernel
 import geotrellis.raster.withTileMethods
-import geotrellis.spark.io.hadoop.HadoopAttributeStore
-import geotrellis.spark.io.hadoop.HadoopLayerDeleter
-import geotrellis.spark.io.hadoop.HadoopLayerReader
-import geotrellis.spark.io.hadoop.HadoopLayerWriter
-import geotrellis.spark.io.index.ZCurveKeyIndexMethod
-import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
-import geotrellis.spark.io.SpatialKeyFormat
-import geotrellis.spark.io.spatialKeyAvroFormat
-import geotrellis.spark.io.tileLayerMetadataFormat
-import geotrellis.spark.io.tileUnionCodec
 import geotrellis.spark.LayerId
 import geotrellis.spark.Metadata
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.TileLayerMetadata
+import geotrellis.spark.io.SpatialKeyFormat
+import geotrellis.spark.io.hadoop.HadoopAttributeStore
+import geotrellis.spark.io.hadoop.HadoopLayerReader
+import geotrellis.spark.io.spatialKeyAvroFormat
+import geotrellis.spark.io.tileLayerMetadataFormat
+import geotrellis.spark.io.tileUnionCodec
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
@@ -73,17 +69,8 @@ object ConvolveLayerExample extends LazyLogging {
     // this will be the new convoluted layer
     val convolvedLayerId = LayerId(srcLayerId.name + "_conv", srcLayerId.zoom)
 
-    // automatically deleting existing layer
-    if (attributeStore.layerExists(convolvedLayerId)) {
-      logger warn s"Layer $convolvedLayerId already exists, deleting ..."
-      HadoopLayerDeleter(attributeStore).delete(convolvedLayerId)
-    }
-
-    logger info s"Writing convoluted layer '${convolvedLayerId}'"
-    val writer = HadoopLayerWriter(catalogPathHdfs, attributeStore)
-    writer.write(convolvedLayerId, convolvedLayerRdd, ZCurveKeyIndexMethod)
-
-    Utils.writeHistogram(attributeStore, srcLayerId.name + "_conv", convolvedLayerRdd.histogram)
+    biggis.landuse.api.deleteLayerFromCatalog(convolvedLayerId)
+    biggis.landuse.api.writeRddToLayer(convolvedLayerRdd, convolvedLayerId)
 
     sc.stop()
     logger info "done."
