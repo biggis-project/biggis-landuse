@@ -14,11 +14,11 @@ body, #map {
 <script>
   var map = L.map('map');
 
-  map.setView([49.015284, 8.402703], 13);
+  map.setView([49.015284, 8.402703], 15);
 
   new L.tileLayer("http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png").addTo(map);
 
-  new L.tileLayer("http://localhost:18080/{z}/{x}/{y}", {layers: 'default', maxNativeZoom: 14, maxZoom: 14}).addTo(map);
+  new L.tileLayer("http://localhost:18080/{z}/{x}/{y}", {layers: 'default', maxNativeZoom: 17, maxZoom: 17}).addTo(map);
 </script>
 </body>
 </html>
