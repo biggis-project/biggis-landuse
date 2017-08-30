@@ -2,15 +2,26 @@ package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
-import geotrellis.raster.withTileMethods
-import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerWriter, HadoopSparkContextMethodsWrapper}
+import geotrellis.spark.io.hadoop.HadoopAttributeStore
+import geotrellis.spark.io.hadoop.HadoopLayerDeleter
+import geotrellis.spark.io.hadoop.HadoopLayerWriter
+import geotrellis.spark.io.hadoop.HadoopSparkContextMethodsWrapper
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
-import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
-import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
-import geotrellis.spark.{LayerId, MultibandTileLayerRDD, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
+import geotrellis.spark.io.SpatialKeyFormat
+import geotrellis.spark.io.spatialKeyAvroFormat
+import geotrellis.spark.io.tileLayerMetadataFormat
+import geotrellis.spark.tiling.FloatingLayoutScheme
+import geotrellis.spark.tiling.ZoomedLayoutScheme
+import geotrellis.spark.LayerId
+import geotrellis.spark.MultibandTileLayerRDD
+import geotrellis.spark.TileLayerMetadata
+import geotrellis.spark.withProjectedExtentTilerKeyMethods
+import geotrellis.spark.withTileRDDReprojectMethods
+import geotrellis.spark.withTilerMethods
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkContext, SparkException}
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkException
 
 
 /**

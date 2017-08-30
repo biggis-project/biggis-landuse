@@ -42,7 +42,7 @@ object Utils extends LazyLogging {
     return new SparkContext(sparkConf)
   }
 
-  def writeHistogram(attributeStore: AttributeStore, layerName: String, histogram: Histogram[Double]): Unit =  {
+  def writeHistogram(attributeStore: AttributeStore, layerName: String, histogram: Histogram[Double]): Unit = {
     logger debug s"Writing histogram of layer '$layerName' to attribute store as 'histogramData' for zoom level 0"
     attributeStore.write(
       LayerId(layerName, 0), "histogramData", histogram)

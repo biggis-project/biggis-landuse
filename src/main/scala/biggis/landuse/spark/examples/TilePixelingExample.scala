@@ -1,22 +1,29 @@
 package biggis.landuse.spark.examples
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.io.HistogramDoubleFormat
-import geotrellis.raster.mapalgebra.focal.Kernel
-import geotrellis.raster.{DoubleArrayTile, MultibandTile, Tile, withTileMethods}
-import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerDeleter, HadoopLayerReader, HadoopLayerWriter}
+import geotrellis.raster.DoubleArrayTile
+import geotrellis.raster.MultibandTile
+import geotrellis.raster.Tile
+import geotrellis.spark.io.hadoop.HadoopAttributeStore
+import geotrellis.spark.io.hadoop.HadoopLayerDeleter
+import geotrellis.spark.io.hadoop.HadoopLayerReader
+import geotrellis.spark.io.hadoop.HadoopLayerWriter
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
-import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
-import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
+import geotrellis.spark.io.SpatialKeyFormat
+import geotrellis.spark.io.spatialKeyAvroFormat
+import geotrellis.spark.io.tileLayerMetadataFormat
+import geotrellis.spark.io.tileUnionCodec
+import geotrellis.spark.LayerId
+import geotrellis.spark.Metadata
+import geotrellis.spark.SpatialKey
+import geotrellis.spark.TileLayerMetadata
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkContext, SparkException}
-import org.apache.spark.mllib.feature.Normalizer
-import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.RDD._
-import org.apache.spark.rdd._
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkException
 
 object TilePixelingExample extends LazyLogging {
 
@@ -34,8 +41,6 @@ object TilePixelingExample extends LazyLogging {
 
   def apply(layerName: String, layerNameOut: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Running pixeling of layer '$layerName' in catalog '$catalogPath'"
-
-    //implicit val sc = Utils.initSparkContext  //moved to main
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)

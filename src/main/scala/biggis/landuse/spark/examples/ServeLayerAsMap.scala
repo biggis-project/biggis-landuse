@@ -11,7 +11,8 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.hadoop.HadoopValueReader
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkContext, SparkException}
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkException
 import spray.can.Http
 import spray.http.MediaTypes
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
@@ -61,7 +62,7 @@ object ServeLayerAsMap extends LazyLogging {
     // init catalog reader
     init(catalogPath, layerNameServed)
     // init ColorMap
-    ServeLayerAsMap.colorMap = if(colorMap == null) initHeatmap(layerNameServed) else colorMap
+    ServeLayerAsMap.colorMap = if (colorMap == null) initHeatmap(layerNameServed) else colorMap
 
     logger info s"Serving layer='$layerNameServed' from catalog='$catalogPath'"
 
@@ -82,8 +83,9 @@ object ServeLayerAsMap extends LazyLogging {
     // catalog reader
     ServeLayerAsMap.fileValueReader = HadoopValueReader(new Path(catalogPath))
   }
+
   // init ColorMap
-  def initHeatmap(layerNameServed: String):  ColorMap = {
+  def initHeatmap(layerNameServed: String): ColorMap = {
     // read quantile breaks from attribute store
     val layerId = LayerId(layerNameServed, 0)
     val hist = fileValueReader.attributeStore.read[Histogram[Double]](layerId, "histogramData")
@@ -106,12 +108,12 @@ class ServeLayerAsMapActor extends Actor with HttpService {
         complete {
           Future {
             try {
-              val tile:Tile = ServeLayerAsMap.reader(LayerId(ServeLayerAsMap.layerNameServed, zoom)).read(x, y)
+              val tile: Tile = ServeLayerAsMap.reader(LayerId(ServeLayerAsMap.layerNameServed, zoom)).read(x, y)
               val png = tile.renderPng(ServeLayerAsMap.colorMap)
               Some(png.bytes)
             } catch {
               //// https://github.com/locationtech/geotrellis/commit/69ee528d99e4d126bd7dbf464ce7805fe4fe33d9
-              case _: ValueNotFoundError => None  // TileNotFoundError in Geotrellis 0.10.3
+              case _: ValueNotFoundError => None // TileNotFoundError in Geotrellis 0.10.3
               //case _: TileNotFoundError => None
               case _: UnsupportedOperationException => None
             }
