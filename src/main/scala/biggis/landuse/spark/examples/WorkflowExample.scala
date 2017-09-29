@@ -56,7 +56,7 @@ object WorkflowExample extends StrictLogging {
 
     // ToDo: configure local paths (example bw)
     //*
-    val projectdir = "data/bw/"
+    val projectdir = "landuse-demo/landuse/"
     /*
     val tile_id = "3431_5378"
     val inputdir = projectdir + tile_id + "/"
