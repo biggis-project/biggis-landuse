@@ -42,6 +42,19 @@ object Utils extends LazyLogging {
     return new SparkContext(sparkConf)
   }
 
+  def initSparkClusterContext: SparkContext = {
+    val sparkConf = new SparkConf()
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    sparkConf.setJars(Seq("hdfs:///jobs/spark-example/biggis-landuse-0.0.4-SNAPSHOT.jar"))
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using sparkConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
+
+    return new SparkContext(sparkConf)
+  }
+
   def writeHistogram(attributeStore: AttributeStore, layerName: String, histogram: Histogram[Double]): Unit = {
     logger debug s"Writing histogram of layer '$layerName' to attribute store as 'histogramData' for zoom level 0"
     attributeStore.write(
