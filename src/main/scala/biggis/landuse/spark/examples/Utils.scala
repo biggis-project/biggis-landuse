@@ -45,7 +45,7 @@ object Utils extends LazyLogging {
   def initSparkClusterContext: SparkContext = {
     val sparkConf = new SparkConf()
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    sparkConf.setJars(Seq("hdfs:///jobs/spark-example/biggis-landuse-0.0.4-SNAPSHOT.jar"))
+    sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.4-SNAPSHOT.jar"))
 
     // We also need to set the spark master.
     // instead of  hardcoding it using sparkConf.setMaster("local[*]")
