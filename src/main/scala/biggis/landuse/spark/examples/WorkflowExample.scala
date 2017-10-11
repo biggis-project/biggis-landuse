@@ -12,7 +12,7 @@ object WorkflowExample extends StrictLogging {
     try {
       val Array(catalogPath) = args
       //implicit val catalogPath = "target/geotrellis-catalog/"
-      implicit val sc = Utils.initSparkContext
+      implicit val sc = Utils.initSparkClusterContext
       WorkflowExample()(catalogPath, sc)
       sc.stop()
     }

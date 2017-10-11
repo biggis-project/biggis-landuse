@@ -21,7 +21,7 @@ object NDVILayerExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(layerNIR, layerRed, layerNDVI, catalogPath) = args
-      implicit val sc = Utils.initSparkContext
+      implicit val sc = Utils.initSparkClusterContext
       NDVILayerExample(layerNIR, layerRed, layerNDVI)(catalogPath, sc)
       sc.stop()
     } catch {
