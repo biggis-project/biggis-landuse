@@ -10,19 +10,20 @@ import org.apache.spark.SparkException
 object WorkflowExample extends StrictLogging {
   def main(args: Array[String]): Unit = {
     try {
-      val Array(catalogPath) = args
+      val Array(projectPath, catalogPath) = args
+      //val projectPath = "hdfs:///landuse-demo/landuse/"
       //implicit val catalogPath = "target/geotrellis-catalog/"
       implicit val sc = Utils.initSparkClusterContext
-      WorkflowExample()(catalogPath, sc)
+      WorkflowExample(projectPath)(catalogPath, sc)
       sc.stop()
     }
     catch {
-      case _: MatchError => println("Run as: /path/to/catalog")
+      case _: MatchError => println("Run as: /path/to/project /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
-  def apply()(implicit catalogPath: String, sc: SparkContext): Unit = {
+  def apply(projectPath: String)(implicit catalogPath: String, sc: SparkContext): Unit = {
     // ToDo: generally replace SpatialKey by SpaceTimeKey, handle timestamp metadata
 
     // Settings (for Debugging)
@@ -56,7 +57,8 @@ object WorkflowExample extends StrictLogging {
 
     // ToDo: configure local paths (example bw)
     //*
-    val projectdir = "landuse-demo/landuse/"
+    //val projectdir = "hdfs:///landuse-demo/landuse/"
+    val projectdir = projectPath
     /*
     val tile_id = "3431_5378"
     val inputdir = projectdir + tile_id + "/"
