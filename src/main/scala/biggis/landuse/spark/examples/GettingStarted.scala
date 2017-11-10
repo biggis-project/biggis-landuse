@@ -16,7 +16,7 @@ object GettingStarted extends LazyLogging {
       try {
         val Array(catalogPath) = args
         //implicit val catalogPath = "target/geotrellis-catalog/"
-        implicit val sc = Utils.initSparkClusterContext
+        implicit val sc = Utils.initSparkAutoContext
         GettingStarted()(catalogPath, sc)
         sc.stop()
       }

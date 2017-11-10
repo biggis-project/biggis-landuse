@@ -20,13 +20,13 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
       val (layerNameArray,Array(layerNameOut, catalogPath)) = (args.take(args.size - 2),args.drop(args.size - 2))
       if(args.size == 4){
         val Array(layerName1, layerName2, layerNameOut, catalogPath) = args
-        implicit val sc = Utils.initSparkClusterContext  // do not use - only for dirty debugging
+        implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
         ManyLayersToMultibandLayer(layerName1, layerName2, layerNameOut)(catalogPath, sc)
         sc.stop()
       } else if(args.size > 4){
         //val layerNameArray = args.take(1 + args.size - 2)
         //val Array(layerNameOut, catalogPath) = args.drop(1 + args.size - 2)
-        implicit val sc = Utils.initSparkClusterContext  // do not use - only for dirty debugging
+        implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
         ManyLayersToMultibandLayer( layerNameArray, layerNameOut)(catalogPath, sc)
         sc.stop()
       }

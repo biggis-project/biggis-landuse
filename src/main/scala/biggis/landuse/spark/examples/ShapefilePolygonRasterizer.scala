@@ -27,7 +27,7 @@ object ShapefilePolygonRasterizer extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(shapefilePath, attribName, layerName, catalogPath) = args
-      implicit val sc: SparkContext = Utils.initSparkClusterContext
+      implicit val sc: SparkContext = Utils.initSparkAutoContext
       ShapefilePolygonRasterizer(shapefilePath, attribName, layerName)(catalogPath, sc)
       sc.stop()
     } catch {

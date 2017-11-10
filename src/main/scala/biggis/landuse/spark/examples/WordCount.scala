@@ -7,7 +7,7 @@ object WordCount extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(input, output) = args
-      implicit val sc : SparkContext = Utils.initSparkClusterContext
+      implicit val sc : SparkContext = Utils.initSparkAutoContext
       WordCount()(input, output, sc)
       sc.stop()
     }

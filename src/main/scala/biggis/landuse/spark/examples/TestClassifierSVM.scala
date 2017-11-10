@@ -19,7 +19,7 @@ object TestClassifierSVM extends StrictLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(trainingName, modelPath) = args
-      implicit val sc = Utils.initSparkClusterContext
+      implicit val sc = Utils.initSparkAutoContext
       TestClassifierSVM(trainingName)(modelPath, sc)
       sc.stop()
     } catch {

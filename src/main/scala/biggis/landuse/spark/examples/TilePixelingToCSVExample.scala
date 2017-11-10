@@ -25,7 +25,7 @@ object TilePixelingToCSVExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(layerName, catalogPath, fileNameCSV) = args
-      implicit val sc = Utils.initSparkClusterContext
+      implicit val sc = Utils.initSparkAutoContext
       TilePixelingToCSVExample(layerName, fileNameCSV)(catalogPath, sc)
       sc.stop()
     } catch {

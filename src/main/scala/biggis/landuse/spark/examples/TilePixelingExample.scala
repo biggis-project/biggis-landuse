@@ -30,7 +30,7 @@ object TilePixelingExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(layerNameIn, layerNameOut, catalogPath) = args
-      implicit val sc = Utils.initSparkClusterContext
+      implicit val sc = Utils.initSparkAutoContext
       TilePixelingExample(layerNameIn, layerNameOut)(catalogPath, sc)
       sc.stop()
     } catch {

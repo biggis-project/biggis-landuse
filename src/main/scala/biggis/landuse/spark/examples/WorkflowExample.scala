@@ -13,13 +13,13 @@ object WorkflowExample extends StrictLogging {
       val Array(projectPath, catalogPath) = args
       //val projectPath = "hdfs:///landuse-demo/landuse/"
       //implicit val catalogPath = "target/geotrellis-catalog/"
-      implicit val sc = Utils.initSparkClusterContext
+      implicit val sc = Utils.initSparkAutoContext
       WorkflowExample(projectPath)(catalogPath, sc)
       sc.stop()
     }
     catch {
       case _: MatchError => println("Run as: /path/to/project /path/to/catalog")
-      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parameter: -Dspark.master=local[*] -Dspark.app.name=Geotrellis"
     }
   }
 

@@ -7,7 +7,7 @@ object DeleteLayer extends App with LazyLogging {
   try {
 
     val Array(layerName, catalogPath) = args
-    val sc = Utils.initSparkClusterContext
+    val sc = Utils.initSparkAutoContext
 
     logger info s"Deleting layer $layerName including all zoom levels in catalog $catalogPath ..."
 

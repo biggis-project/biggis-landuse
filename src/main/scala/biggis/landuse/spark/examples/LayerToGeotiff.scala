@@ -29,7 +29,7 @@ import org.apache.spark.rdd.RDD
 object LayerToGeotiff extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
-      implicit val sc = Utils.initSparkClusterContext
+      implicit val sc = Utils.initSparkAutoContext
       val Array(layerName, outputPath, catalogPath) = args
       LayerToGeotiff(layerName, outputPath)(catalogPath, sc)
       sc.stop()
