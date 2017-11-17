@@ -1,26 +1,43 @@
 package biggis.landuse.spark.examples
 
-import com.typesafe.scalalogging.LazyLogging
 import geotrellis.spark.LayerId
+import geotrellis.spark.io.hadoop.HadoopLayerReader
 import geotrellis.spark.io.hadoop.HadoopLayerWriter
 import org.apache.hadoop.fs.Path
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+
+object DummyGeotrellisExample extends App {
+
+  val catalogPath = "testCatalog" // CONFIG
+  val layerName = "testLayer" // INPUT
+
+  //    implicit val sc = Utils.initSparkAutoContext
+
+  val sparkConf = new SparkConf()
+  sparkConf.setAppName("Geotrellis Example")
+  sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+  sparkConf.set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+  sparkConf.setMaster("local[*]")
+  implicit val sc = new SparkContext(sparkConf)
+
+  val layerId = LayerId(layerName, 0)
+
+  val writer = HadoopLayerWriter(new Path(catalogPath))
+
+  // write some metadata to layer
+  import spray.json.DefaultJsonProtocol._
+  val attributeStore = writer.attributeStore
+  attributeStore.write(layerId, "metadata", "some content")
+
+  // check that we created the layer
+  val isThere = writer.attributeStore.layerExists(layerId) // OUTPUT
 
 
-object DummyGeotrellisExample extends LazyLogging {
+  sc.stop()
 
-  def main(args: Array[String]): Unit = {
-
-    val catalogPath = "testCatalog"
-    val layerName = "testLayer"
-
-    implicit val sc = Utils.initSparkAutoContext
-
-    val writer = HadoopLayerWriter(new Path(catalogPath))
-    val isThere = writer.attributeStore.layerExists(LayerId(layerName, 10))
-
-    sc.stop()
-
-    logger debug s"Does the layer $layerName in catalog $catalogPath exist ? $isThere"
-  }
-
+  if (isThere)
+    println("the layer is there")
+  else
+    println("not there")
 }
