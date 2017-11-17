@@ -28,7 +28,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
       val (layerName: String, zoomLevel: Int) =
         if(layerNameArray.size == 2) layerNameArray
         else if (layerNameArray.size == 1) (layerNameArray(0),-1)
-      implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
+      implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
       MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc, zoomLevel)
       sc.stop()
       logger debug "Spark context stopped"

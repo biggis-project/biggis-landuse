@@ -15,7 +15,7 @@ import geotrellis.spark.io.spatialKeyAvroFormat
 import geotrellis.spark.io.tileLayerMetadataFormat
 import geotrellis.spark.io.tileUnionCodec
 import org.apache.hadoop.fs.Path
-import org.apache.spark.SparkException
+import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.rdd.RDD
 
 object ConvolveLayerExample extends LazyLogging {
@@ -23,18 +23,20 @@ object ConvolveLayerExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(layerName, circleKernelRadius, catalogPath) = args
-      ConvolveLayerExample(layerName, circleKernelRadius.toInt)(catalogPath)
+      implicit val sc = Utils.initSparkAutoContext
+      ConvolveLayerExample(layerName, circleKernelRadius.toInt)(catalogPath, sc)
+      sc.stop()
     } catch {
       case _: MatchError => println("Run as: layerName circleKernelRadius /path/to/catalog")
       case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
     }
   }
 
-  def apply(layerName: String, circleKernelRadius: Int)(implicit catalogPath: String): Unit = {
+  def apply(layerName: String, circleKernelRadius: Int)(implicit catalogPath: String, sc: SparkContext): Unit = {
     logger info s"Running convolution of layer '$layerName' in catalog '$catalogPath'"
     logger info s"Using circular kernel of radius $circleKernelRadius"
 
-    implicit val sc = Utils.initSparkContext
+    //implicit val sc = Utils.initSparkContext
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
@@ -72,7 +74,7 @@ object ConvolveLayerExample extends LazyLogging {
     biggis.landuse.api.deleteLayerFromCatalog(convolvedLayerId)
     biggis.landuse.api.writeRddToLayer(convolvedLayerRdd, convolvedLayerId)
 
-    sc.stop()
+    //sc.stop()
     logger info "done."
   }
 }

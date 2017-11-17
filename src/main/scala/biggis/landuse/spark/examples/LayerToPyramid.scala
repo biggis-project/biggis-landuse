@@ -18,7 +18,7 @@ object LayerToPyramid extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(catalogPath, layerName) = args
-      implicit val sc = Utils.initSparkContext
+      implicit val sc = Utils.initSparkAutoContext
       LayerToPyramid(catalogPath, layerName)
       sc.stop()
     } catch {

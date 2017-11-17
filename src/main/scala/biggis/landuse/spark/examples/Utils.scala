@@ -1,12 +1,14 @@
 package biggis.landuse.spark.examples
 
+import java.lang.management.ManagementFactory
+
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
 import geotrellis.spark.LayerId
 import geotrellis.spark.io.AttributeStore
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 /**
   * Created by Viliam Simko on 2016-11-04
@@ -16,6 +18,15 @@ object Utils extends LazyLogging {
   val TILE_SIZE = 256
   val RDD_PARTITIONS = 32
   val RESAMPLING_METHOD = Bilinear
+
+  @deprecated("do not use, only for dirty debugging")
+  def initSparkAutoContext: SparkContext = {
+    logger info s"initSparkAutoContext "
+    val arg1 = ManagementFactory.getRuntimeMXBean.getInputArguments.get(1)
+    if(arg1 == "-Dspark.master=local[*]")
+      return initSparkContext
+    return initSparkClusterContext
+  }
 
   @deprecated("do not use, only for dirty debugging")
   def initLocalSparkContext: SparkContext = {
@@ -33,6 +44,19 @@ object Utils extends LazyLogging {
     sparkConf.setAppName("Geotrellis Example")
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     sparkConf.set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+
+    // We also need to set the spark master.
+    // instead of  hardcoding it using sparkConf.setMaster("local[*]")
+    // we can use the JVM parameter: -Dspark.master=local[*]
+    // sparkConf.setMaster("local[*]")
+
+    return new SparkContext(sparkConf)
+  }
+
+  def initSparkClusterContext: SparkContext = {
+    val sparkConf = new SparkConf()
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.4-SNAPSHOT.jar"))
 
     // We also need to set the spark master.
     // instead of  hardcoding it using sparkConf.setMaster("local[*]")

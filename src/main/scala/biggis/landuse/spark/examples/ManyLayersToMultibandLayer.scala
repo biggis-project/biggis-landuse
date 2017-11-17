@@ -20,13 +20,13 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
       val (layerNameArray,Array(layerNameOut, catalogPath)) = (args.take(args.size - 2),args.drop(args.size - 2))
       if(args.size == 4){
         val Array(layerName1, layerName2, layerNameOut, catalogPath) = args
-        implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
+        implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
         ManyLayersToMultibandLayer(layerName1, layerName2, layerNameOut)(catalogPath, sc)
         sc.stop()
       } else if(args.size > 4){
         //val layerNameArray = args.take(1 + args.size - 2)
         //val Array(layerNameOut, catalogPath) = args.drop(1 + args.size - 2)
-        implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
+        implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
         ManyLayersToMultibandLayer( layerNameArray, layerNameOut)(catalogPath, sc)
         sc.stop()
       }
@@ -53,6 +53,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     val layerReader = HadoopLayerReader(attributeStore)
 
     val commonZoom = Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2))
+    logger info s"using zoom level $commonZoom"
 
     val layerId1 = findLayerIdByNameAndZoom(layerName1, commonZoom)
     val layerId2 = findLayerIdByNameAndZoom(layerName2, commonZoom)
@@ -98,6 +99,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     implicit val layerReader = HadoopLayerReader(attributeStore)
 
     implicit val commonZoom = getCommonZoom(layerNames)  //Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2)
+    logger info s"using zoom level $commonZoom"
 
     val outTiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = mergeMBlayers(layerNames)
 
@@ -180,6 +182,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
   def mergeMBlayers(layerNames: Array[String])(implicit commonZoom: Int, attributeStore: HadoopAttributeStore, layerReader: HadoopLayerReader): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
     var tilesmerged : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = null
     layerNames.foreach( layerName => {
+      logger info s"Reading Layer $layerName"
       var tiles : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReaderMB(getLayerId(layerName))(layerReader)
       if(tilesmerged == null){
         tilesmerged = tiles

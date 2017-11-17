@@ -31,10 +31,22 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
-    <geotrellis.version>1.1.1</geotrellis.version>
+    <geotrellis.version>1.2.0-RC1</geotrellis.version>
     <spark.version>2.1.0</spark.version>
     <kafka.version>0.10.2.0</kafka.version>
+    <scopes.provided>provided</scopes.provided>
   </properties>
+
+  <profiles>
+    <profile>
+      <!-- IDE builds -->
+      <id>IDE</id>
+      <properties>
+        <scopes.provided>compile</scopes.provided>
+      </properties>
+      <!-- Enable in IntelliJ IDEA : View -> Tool Windows -> Maven Projects : Profiles -> IDE -->
+    </profile>
+  </profiles>
 
   <!-- see: http://stackoverflow.com/questions/16225573/why-cant-i-resolve-the-dependencies-for-geotools-maven-quickstart -->
   <repositories>
@@ -55,6 +67,11 @@
       <id>opengeo</id>
       <name>OpenGeo Maven Repository</name>
       <url>http://repo.opengeo.org</url>
+    </repository>
+    <repository>
+      <id>org.locationtech.geotrellis</id>
+      <name>repo.locationtech.org</name>
+      <url>https://repo.locationtech.org/content/repositories/releases</url>
     </repository>
   </repositories>
 
@@ -165,18 +182,21 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.compat.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>${scopes.provided}</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-mllib_${scala.compat.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>${scopes.provided}</scope>
     </dependency>
 
     <!--dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka_${scala.compat.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>${scopes.provided}</scope>
     </dependency-->
 
     <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka-0-8_2.11 -->
@@ -184,6 +204,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka-0-8_${scala.compat.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>${scopes.provided}</scope>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka-0-10_2.11 -->
@@ -191,6 +212,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka-0-10_${scala.compat.version}</artifactId>
       <version>${spark.version}</version>
+      <scope>${scopes.provided}</scope>
     </dependency>
 
     <!-- ==== SPARK CSV ====================== -->

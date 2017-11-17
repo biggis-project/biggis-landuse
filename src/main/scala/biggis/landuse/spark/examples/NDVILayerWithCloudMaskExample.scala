@@ -16,7 +16,7 @@ object NDVILayerWithCloudMaskExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(layerNIR, layerRed, layerClouds, layerNDVI, catalogPath) = args
-      implicit val sc = Utils.initSparkContext
+      implicit val sc = Utils.initSparkAutoContext
       NDVILayerWithCloudMaskExample(layerNIR, layerRed, layerClouds, layerNDVI)(catalogPath, sc)
       sc.stop()
     } catch {

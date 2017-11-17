@@ -29,7 +29,7 @@ object MultibandGeotiffToLayerNoReproj extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(inputPath, layerName, catalogPath) = args
-      implicit val sc = Utils.initSparkContext  // do not use - only for dirty debugging
+      implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
       MultibandGeotiffToLayerNoReproj(inputPath, layerName)(catalogPath, sc)
       sc.stop()
       logger debug "Spark context stopped"
