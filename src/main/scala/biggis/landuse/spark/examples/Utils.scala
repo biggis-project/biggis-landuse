@@ -10,6 +10,8 @@ import geotrellis.spark.LayerId
 import geotrellis.spark.io.AttributeStore
 import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
+import scala.collection.JavaConverters._
+
 /**
   * Created by Viliam Simko on 2016-11-04
   */
@@ -19,13 +21,17 @@ object Utils extends LazyLogging {
   val RDD_PARTITIONS = 32
   val RESAMPLING_METHOD = Bilinear
 
-  @deprecated("do not use, only for dirty debugging")
   def initSparkAutoContext: SparkContext = {
     logger info s"initSparkAutoContext "
-    val arg1 = ManagementFactory.getRuntimeMXBean.getInputArguments.get(1)
-    if(arg1 == "-Dspark.master=local[*]")
-      return initSparkContext
-    return initSparkClusterContext
+    val args:List[String] = ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.toList
+
+    return args.find(_ == "-Dspark.master=local[*]") match {
+      case Some(_) => {
+        logger info s"calling initSparkContext"
+        initSparkContext
+      }
+      case None => initSparkClusterContext
+    }
   }
 
   @deprecated("do not use, only for dirty debugging")
@@ -54,8 +60,11 @@ object Utils extends LazyLogging {
   }
 
   def initSparkClusterContext: SparkContext = {
+
     val sparkConf = new SparkConf()
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+
+    //TODO: get rid of the hardcoded JAR
     sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.4-SNAPSHOT.jar"))
 
     // We also need to set the spark master.
