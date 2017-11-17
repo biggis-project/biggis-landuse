@@ -5,17 +5,21 @@ import geotrellis.raster.Tile
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.spark.LayerId
 import geotrellis.spark.Metadata
+import geotrellis.spark.SpaceTimeKey
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.TileLayerMetadata
 import geotrellis.spark.io.hadoop.HadoopAttributeStore
 import geotrellis.spark.io.hadoop.HadoopLayerDeleter
 import geotrellis.spark.io.hadoop.HadoopLayerWriter
+import geotrellis.spark.io.index.HilbertKeyIndexMethod
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.io.json.Implicits._
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.RemoteIterator
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import scala.reflect.runtime.universe._
 
 package object api extends LazyLogging {
 
@@ -83,15 +87,32 @@ package object api extends LazyLogging {
     * @param catalogPath Geotrellis catalog
     * @param sc          SparkContext
     */
-  def writeRddToLayer(rdd: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]], layerId: LayerId)
-                     (implicit catalogPath: String, sc: SparkContext): Unit = {
+  def writeRddToLayer[K]
+  (rdd: RDD[(K, Tile)] with Metadata[TileLayerMetadata[K]], layerId: LayerId)
+  (implicit catalogPath: String, sc: SparkContext, ttag: TypeTag[K]): Unit = {
+
     logger debug s"Writing RDD to layer '${layerId.name}' at zoom level ${layerId.zoom} ..."
 
     val writer = HadoopLayerWriter(new Path(catalogPath))
-    writer.write(layerId, rdd, ZCurveKeyIndexMethod)
 
-    logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
-    writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd.histogram)
+    if (ttag.tpe =:= typeOf[SpatialKey]) {
+
+      logger debug s"Writing using SpatialKey + ZCurveKeyIndexMethod ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]]
+      writer.write(layerId, rdd2, ZCurveKeyIndexMethod)
+
+      logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
+      writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)
+
+    } else if (ttag.tpe =:= typeOf[SpaceTimeKey]) {
+
+      logger debug s"Writing using SpaceTimeKey + HilbertKeyIndexMethod ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
+      writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))
+
+    } else {
+      throw new RuntimeException("we did not expect any other type than SpatialKey or SpaceTimeKey")
+    }
 
     logger debug s"Writing done..."
   }
