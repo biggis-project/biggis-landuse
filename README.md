@@ -9,7 +9,7 @@ Land use update detection based on Geotrellis and Spark
 mvn package
 
 # now we can run the example app
-java -cp target/biggis-landuse-0.0.3-SNAPSHOT.jar \
+java -cp target/biggis-landuse-0.0.4-SNAPSHOT.jar \
   biggis.landuse.spark.examples.GeotiffToPyramid \
   /path/to/raster.tif \
   new_layer_name \
@@ -34,6 +34,8 @@ wget http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC8107
 We strongly recommend using an IDE for Scala development,
 in particular IntelliJ IDEA which has a better support
 for Scala than Eclipse
+
+For IDE Builds please select *Maven Profile* **IDE** before running to avoid using *scope provided* (necessary for cluster builds)
 
 [biggis-spark]: https://github.com/biggis-project/biggis-spark
 
