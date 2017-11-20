@@ -88,15 +88,15 @@ package object api extends LazyLogging {
     * @param catalogPath Geotrellis catalog
     * @param sc          SparkContext
     */
-  def writeRddToLayer[K, T]
-  (rdd: RDD[(K, T)] with Metadata[TileLayerMetadata[K]], layerId: LayerId)
-  (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagTile: TypeTag[T]): Unit = {
+  def writeRddToLayer[K, V, M]
+  (rdd: RDD[(K, V)] with Metadata[M], layerId: LayerId)
+  (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagValue: TypeTag[V], ttagMeta: TypeTag[M]): Unit = {
 
     logger debug s"Writing RDD to layer '${layerId.name}' at zoom level ${layerId.zoom} ..."
 
     val writer = HadoopLayerWriter(new Path(catalogPath))
 
-    if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagTile.tpe =:= typeOf[Tile]) {
+    if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
 
       logger debug s"Writing using SpatialKey + ZCurveKeyIndexMethod + Tile ..."
       val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]]
@@ -105,28 +105,32 @@ package object api extends LazyLogging {
       logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
       writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)
 
-    } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey]&& ttagTile.tpe =:= typeOf[Tile]) {
+    } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey]&& ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
 
       logger debug s"Writing using SpaceTimeKey + HilbertKeyIndexMethod + Tile ..."
       val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
       writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))
 
-    } else if(ttagKey.tpe =:= typeOf[SpatialKey] && ttagTile.tpe =:= typeOf[MultibandTile]) {
+    } else if(ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
 
       logger debug s"Writing using SpatialKey + ZCurveKeyIndexMethod + MultibandTile ..."
       val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
       writer.write(layerId, rdd2, ZCurveKeyIndexMethod)
 
-    } else if(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagTile.tpe =:= typeOf[MultibandTile]) {
+    } else if(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
 
       logger debug s"Writing using SpaceTimeKey + HilbertKeyIndexMethod + MultibandTile ..."
       val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
       writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))
 
-    } else if(!(ttagKey.tpe =:= typeOf[SpatialKey]) && !(ttagKey.tpe =:= typeOf[SpaceTimeKey])
-      && !(ttagTile.tpe =:= typeOf[Tile]) && !(ttagTile.tpe =:= typeOf[MultibandTile]) ) {
+    } else if((ttagKey.tpe =:= typeOf[SpatialKey] && !(ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]))
+      || (ttagKey.tpe =:= typeOf[SpaceTimeKey] && !(ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]])) ) {
+      throw new RuntimeException("we did not expect any other key with meta combination than SpatialKey with TileLayerMetadata[SpatialKey] or SpaceTimeKey with TileLayerMetadata[SpaceTimeKey] ")
+    } else if(!(ttagValue.tpe =:= typeOf[Tile]) && !(ttagValue.tpe =:= typeOf[MultibandTile])
+      && !(ttagKey.tpe =:= typeOf[SpatialKey] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]])
+      && !(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) ) {
       throw new RuntimeException("we did not expect any other key type than SpatialKey or SpaceTimeKey and any other tile type than Tile or MultibandTile")
-    } else if(!(ttagTile.tpe =:= typeOf[Tile]) && !(ttagTile.tpe =:= typeOf[MultibandTile]) ) {
+    } else if(!(ttagValue.tpe =:= typeOf[Tile]) && !(ttagValue.tpe =:= typeOf[MultibandTile]) ) {
       throw new RuntimeException("we did not expect any other type than Tile or MultibandTile")
     } else {
       throw new RuntimeException("we did not expect any other type than SpatialKey or SpaceTimeKey")
