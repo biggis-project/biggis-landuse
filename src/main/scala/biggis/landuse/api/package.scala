@@ -1,7 +1,7 @@
 package biggis.landuse
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster.Tile
+import geotrellis.raster.{MultibandTile, Tile}
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.spark.LayerId
 import geotrellis.spark.Metadata
@@ -20,6 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.runtime.universe._
+import scala.language.implicitConversions
 
 package object api extends LazyLogging {
 
@@ -33,9 +34,9 @@ package object api extends LazyLogging {
     */
   implicit def convertToScalaIterator[T](underlying: RemoteIterator[T]): Iterator[T] = {
     case class wrapper(underlying: RemoteIterator[T]) extends Iterator[T] {
-      override def hasNext = underlying.hasNext
+      override def hasNext : Boolean = underlying.hasNext
 
-      override def next = underlying.next
+      override def next : T = underlying.next
     }
     wrapper(underlying)
   }
@@ -87,29 +88,46 @@ package object api extends LazyLogging {
     * @param catalogPath Geotrellis catalog
     * @param sc          SparkContext
     */
-  def writeRddToLayer[K]
-  (rdd: RDD[(K, Tile)] with Metadata[TileLayerMetadata[K]], layerId: LayerId)
-  (implicit catalogPath: String, sc: SparkContext, ttag: TypeTag[K]): Unit = {
+  def writeRddToLayer[K, T]
+  (rdd: RDD[(K, T)] with Metadata[TileLayerMetadata[K]], layerId: LayerId)
+  (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagTile: TypeTag[T]): Unit = {
 
     logger debug s"Writing RDD to layer '${layerId.name}' at zoom level ${layerId.zoom} ..."
 
     val writer = HadoopLayerWriter(new Path(catalogPath))
 
-    if (ttag.tpe =:= typeOf[SpatialKey]) {
+    if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagTile.tpe =:= typeOf[Tile]) {
 
-      logger debug s"Writing using SpatialKey + ZCurveKeyIndexMethod ..."
+      logger debug s"Writing using SpatialKey + ZCurveKeyIndexMethod + Tile ..."
       val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]]
       writer.write(layerId, rdd2, ZCurveKeyIndexMethod)
 
       logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
       writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)
 
-    } else if (ttag.tpe =:= typeOf[SpaceTimeKey]) {
+    } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey]&& ttagTile.tpe =:= typeOf[Tile]) {
 
-      logger debug s"Writing using SpaceTimeKey + HilbertKeyIndexMethod ..."
+      logger debug s"Writing using SpaceTimeKey + HilbertKeyIndexMethod + Tile ..."
       val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
       writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))
 
+    } else if(ttagKey.tpe =:= typeOf[SpatialKey] && ttagTile.tpe =:= typeOf[MultibandTile]) {
+
+      logger debug s"Writing using SpatialKey + ZCurveKeyIndexMethod + MultibandTile ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
+      writer.write(layerId, rdd2, ZCurveKeyIndexMethod)
+
+    } else if(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagTile.tpe =:= typeOf[MultibandTile]) {
+
+      logger debug s"Writing using SpaceTimeKey + HilbertKeyIndexMethod + MultibandTile ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
+      writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))
+
+    } else if(!(ttagKey.tpe =:= typeOf[SpatialKey]) && !(ttagKey.tpe =:= typeOf[SpaceTimeKey])
+      && !(ttagTile.tpe =:= typeOf[Tile]) && !(ttagTile.tpe =:= typeOf[MultibandTile]) ) {
+      throw new RuntimeException("we did not expect any other key type than SpatialKey or SpaceTimeKey and any other tile type than Tile or MultibandTile")
+    } else if(!(ttagTile.tpe =:= typeOf[Tile]) && !(ttagTile.tpe =:= typeOf[MultibandTile]) ) {
+      throw new RuntimeException("we did not expect any other type than Tile or MultibandTile")
     } else {
       throw new RuntimeException("we did not expect any other type than SpatialKey or SpaceTimeKey")
     }
