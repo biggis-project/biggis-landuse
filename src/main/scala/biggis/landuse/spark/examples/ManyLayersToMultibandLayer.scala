@@ -10,6 +10,7 @@ import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.rdd.RDD
+import biggis.landuse.api
 
 /**
   * Created by vlx on 1/19/17.
@@ -17,23 +18,23 @@ import org.apache.spark.rdd.RDD
 object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with LazyLogging
   def main(args: Array[String]): Unit = {
     try {
-      val (layerNameArray,Array(layerNameOut, catalogPath)) = (args.take(args.size - 2),args.drop(args.size - 2))
-      if(args.size == 4){
-        val Array(layerName1, layerName2, layerNameOut, catalogPath) = args
-        implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
-        ManyLayersToMultibandLayer(layerName1, layerName2, layerNameOut)(catalogPath, sc)
+      val (layerNameArray,Array(layerStackNameOut, catalogPath)) = (args.take(args.length - 2),args.drop(args.length - 2))
+      if(args.length == 4){
+        val Array(layerName1, layerName2, layerStackNameOut, catalogPath) = args
+        implicit val sc : SparkContext = Utils.initSparkAutoContext  // only for debugging - needs rework
+        ManyLayersToMultibandLayer(layerName1, layerName2, layerStackNameOut)(catalogPath, sc)
         sc.stop()
-      } else if(args.size > 4){
+      } else if(args.length > 4){
         //val layerNameArray = args.take(1 + args.size - 2)
         //val Array(layerNameOut, catalogPath) = args.drop(1 + args.size - 2)
-        implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
-        ManyLayersToMultibandLayer( layerNameArray, layerNameOut)(catalogPath, sc)
+        implicit val sc : SparkContext = Utils.initSparkAutoContext  // only for debugging - needs rework
+        ManyLayersToMultibandLayer( layerNameArray, layerStackNameOut)(catalogPath, sc)
         sc.stop()
       }
       logger debug "Spark context stopped"
     } catch {
-      case _: MatchError => println("Run as: inputPath layerName /path/to/catalog")
-      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
+      case _: MatchError => println("Run as: inputLayerName1 inputLayerName2 [inputLayerName3 ...] layerStackNameOut /path/to/catalog")
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parameter: -Dspark.master=local[*]"
     }
   }
 
@@ -52,7 +53,8 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     implicit val attributeStore = HadoopAttributeStore(catalogPathHdfs)
     val layerReader = HadoopLayerReader(attributeStore)
 
-    val commonZoom = Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2))
+    //val commonZoom = Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2))
+    val commonZoom = findFinestZoom(List(layerName1,layerName2))
     logger info s"using zoom level $commonZoom"
 
     val layerId1 = findLayerIdByNameAndZoom(layerName1, commonZoom)
@@ -69,8 +71,9 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
       layerReaderMB(layerId2)(layerReader)
 
     val outTiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
-      merge2MBlayers(tiles1,tiles2)
+      stack2MBlayers(tiles1,tiles2)
 
+    /*
     // Create the writer that we will use to store the tiles in the local catalog.
     val writer = HadoopLayerWriter(catalogPathHdfs, attributeStore)
     val layerIdOut = LayerId(layerNameOut, commonZoom)
@@ -83,6 +86,10 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
 
     logger debug "Writing reprojected tiles using space filling curve"
     writer.write(layerIdOut, outTiles, ZCurveKeyIndexMethod)
+    */
+
+    biggis.landuse.api.deleteLayerFromCatalog(layerNameOut, commonZoom)
+    biggis.landuse.api.writeRddToLayer( outTiles, (layerNameOut, commonZoom))
 
     //sc.stop()
     logger info "done."
@@ -93,16 +100,20 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     val layerNamesAll : String = {var layerNamesConcat = "";layerNames.foreach( layerName => layerNamesConcat += "["+layerName+"]");layerNamesConcat}
     logger info s"Combining '$layerNamesAll' into '$layerNameOut' inside '$catalogPath'"
 
+    /*
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
     implicit val attributeStore = HadoopAttributeStore(catalogPathHdfs)
+    */
+    implicit val attributeStore = biggis.landuse.api.catalogToStore(catalogPath)
     implicit val layerReader = HadoopLayerReader(attributeStore)
 
-    implicit val commonZoom = getCommonZoom(layerNames)  //Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2)
+    implicit val commonZoom = findFinestZoom(layerNames)  //Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2)
     logger info s"using zoom level $commonZoom"
 
-    val outTiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = mergeMBlayers(layerNames)
+    val outTiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = createLayerStack(layerNames)
 
+    /*
     // Create the writer that we will use to store the tiles in the local catalog.
     val writer = HadoopLayerWriter(catalogPathHdfs, attributeStore)
     val layerIdOut = LayerId(layerNameOut, commonZoom)
@@ -115,6 +126,10 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
 
     logger debug "Writing reprojected tiles using space filling curve"
     writer.write(layerIdOut, outTiles, ZCurveKeyIndexMethod)
+    */
+
+    biggis.landuse.api.deleteLayerFromCatalog(layerNameOut, commonZoom)
+    biggis.landuse.api.writeRddToLayer( outTiles, (layerNameOut, commonZoom))
 
     //sc.stop()
     logger info "done."
@@ -123,6 +138,10 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
 
   def findFinestZoom(layerName: String)(implicit attributeStore: HadoopAttributeStore): Int = {
     val zoomsOfLayer = attributeStore.layerIds filter (_.name == layerName)
+    if (zoomsOfLayer.isEmpty){
+      logger info s"Layer not found: $layerName"
+      throw new RuntimeException(s"Layer not found : $layerName")
+    }
     zoomsOfLayer.sortBy(_.zoom).last.zoom
   }
 
@@ -153,16 +172,17 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     catch { case _: Throwable => null }
   }
 
-  def getCommonZoom(layerNames: Array[String])(implicit attributeStore: HadoopAttributeStore) : Int = {
+  def findFinestZoom(layerNames: Iterable[String])(implicit attributeStore: HadoopAttributeStore) : Int = {
     var commonZoom: Int = 0
     layerNames.foreach( layerName => { commonZoom = Math.max(commonZoom, findFinestZoom(layerName))})
     commonZoom
   }
+
   def getLayerId(layerName: String)(implicit attributeStore: HadoopAttributeStore, commonZoom: Int): LayerId ={
     findLayerIdByNameAndZoom(layerName,commonZoom)
   }
 
-  def merge2MBlayers(tiles1:RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]], tiles2: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]])(implicit tilesize: (Int,Int) = (256,256)): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] ={
+  def stack2MBlayers(tiles1:RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]], tiles2: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]])(implicit tilesize: (Int,Int) = (256,256)): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] ={
     val tilesmerged: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
       tiles1.withContext { rdd =>
         rdd.join(tiles2).map { case (spatialKey, (mbtile1, mbtile2)) =>
@@ -179,15 +199,21 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
       }
     tilesmerged
   }
-  def mergeMBlayers(layerNames: Array[String])(implicit commonZoom: Int, attributeStore: HadoopAttributeStore, layerReader: HadoopLayerReader): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
+  def createLayerStack(layerNames: Array[String])(implicit commonZoom: Int, attributeStore: HadoopAttributeStore, layerReader: HadoopLayerReader): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
     var tilesmerged : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = null
     layerNames.foreach( layerName => {
       logger info s"Reading Layer $layerName"
-      var tiles : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReaderMB(getLayerId(layerName))(layerReader)
-      if(tilesmerged == null){
-        tilesmerged = tiles
-      } else {
-        tilesmerged = merge2MBlayers(tilesmerged, tiles)
+      if (attributeStore.layerExists(layerName,commonZoom)) {
+        var tiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReaderMB(getLayerId(layerName))(layerReader)
+        if (tilesmerged == null) {
+          tilesmerged = tiles
+        } else {
+          tilesmerged = stack2MBlayers(tilesmerged, tiles)
+        }
+      }
+      else {
+        logger info s"Layer not found: $layerName"
+        throw new RuntimeException(s"Layer not found : $layerName")
       }
     })
     tilesmerged
