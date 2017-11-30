@@ -23,6 +23,9 @@ import org.apache.spark.rdd.RDD
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 
+/**
+  * Created by Viliam Simko (viliam.simko@gmail.com)
+  */
 package object api extends LazyLogging {
 
   type SpatialRDD = RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]

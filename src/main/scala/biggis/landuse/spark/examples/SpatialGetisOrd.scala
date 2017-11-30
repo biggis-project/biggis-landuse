@@ -18,6 +18,9 @@ import geotrellis.spark.io.tileLayerMetadataFormat
 import geotrellis.spark.io.tileUnionCodec
 import org.apache.spark.rdd.RDD
 
+/**
+  * Created by Viliam Simko (viliam.simko@gmail.com)
+  */
 object SpatialGetisOrd extends App with LazyLogging {
 
   val layerName = "morning2"
@@ -35,7 +38,7 @@ object SpatialGetisOrd extends App with LazyLogging {
 
       val layerReader = HadoopLayerReader(catalogPath)
 
-      val queryResult: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+      val queryResult: SpatialRDD =
         layerReader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
 
       val weightMatrix = Kernel.circle(circleKernelRadius, queryResult.metadata.cellwidth, circleKernelRadius)

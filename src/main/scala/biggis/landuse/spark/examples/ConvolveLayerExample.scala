@@ -19,6 +19,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
 
+/**
+  * Created by Viliam Simko (viliam.simko@gmail.com)
+  */
 object ConvolveLayerExample extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
