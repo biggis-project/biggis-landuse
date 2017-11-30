@@ -32,7 +32,7 @@ object GeotiffTilingExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(inputPath, layerName, catalogPath) = args
-      implicit val sc = Utils.initSparkContext
+      implicit val sc = Utils.initSparkAutoContext
       GeotiffTilingExample(inputPath, layerName)(catalogPath, sc)
       sc.stop()
     } catch {

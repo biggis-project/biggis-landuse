@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.Path
 
 // https://github.com/geotrellis/geotrellis/blob/master/docs/spark/spark-examples.md
 
-@deprecated("for debugging only (attention: writes many tiles, not single file)")
+@deprecated("for debugging only (attention: writes many tiles, not single file)", "always")
 object MultibandLayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {

@@ -24,7 +24,7 @@ import geotrellis.spark.etl.hadoop
 /**
   * Created by ak on 20.10.2016.
   */
-@deprecated("do not use, only for debugging")
+@deprecated("do not use, only for debugging", "always")
 object MultibandExample extends StrictLogging{
 
   def main(args: Array[String]): Unit = {

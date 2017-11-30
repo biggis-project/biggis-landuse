@@ -15,7 +15,7 @@ import org.json4s.native.JsonMethods._
 /**
   * Renamed by ak on 26.01.2017.
   */
-@deprecated("do not use, except for debugging, replace by UtilsML")
+@deprecated("do not use, except for debugging, replace by UtilsML", "always")
 object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
   case class BandNoLabel(classBandNo: Int)
   def MultibandTile2xyLabeledPoint( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): RDD[(SpatialKey, (Int, Int, LabeledPoint))] = {
@@ -55,10 +55,10 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     model_multi.save(sc, svmClassifier)
   }
 
-  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
+  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
   case class LabelPointSpatialRef(spatialKey: SpatialKey, offset: Int)
 
-  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
+  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
   def MultibandTile2LabelPoint(data: (SpatialKey, MultibandTile)): Array[(LabeledPoint, LabelPointSpatialRef)] = {
 
     val (spatialKey, tile) = data
@@ -83,7 +83,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     arrayLP
   }
 
-  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples")
+  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
   def MultibandTile2LabelPoint(rdd: RDD[(SpatialKey, MultibandTile)]): (RDD[LabeledPoint], RDD[LabelPointSpatialRef]) = {
     // ToDo: Select only pixels within training data
     val data_temp_with_spatialref: RDD[(LabeledPoint, LabelPointSpatialRef)] = rdd
@@ -96,7 +96,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     (data_temp, spatialref)
   }
 
-  @deprecated("do not use, replace by UtilsML.SaveAsLibSVMFile")
+  @deprecated("do not use, replace by UtilsML.SaveAsLibSVMFile", "always")
   def SaveAsLibSVMFile(data: (RDD[LabeledPoint], RDD[LabelPointSpatialRef]), trainingName: String): Unit = {
     try {
       UtilsML.SaveAsLibSVMFile(data._1, trainingName)
@@ -106,9 +106,9 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     }
   }
 
-  @deprecated("for debugging purposes")
+  @deprecated("for debugging purposes", "always")
   case class Delimiter(delimiter: String)
-  @deprecated("for debugging purposes")
+  @deprecated("for debugging purposes", "always")
   def SaveAsCSVFile(data: RDD[LabeledPoint], trainingName: String, delimiter: Delimiter = Delimiter(";"))(implicit removeZeroLabel: Boolean = false): Unit = {
     try {
       def SaveCSV(data: RDD[LabeledPoint], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
@@ -173,7 +173,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
 
   //@deprecated("for debugging purposes")
   //case class RDDKeyLabeledPoint( rdd : RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]])
-  @deprecated("for debugging purposes")
+  @deprecated("for debugging purposes", "always")
   def SaveAsCSVFileWithKey(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String, delimiter: Delimiter = Delimiter(";")): Unit = {
     try {
       def SaveCSV(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
@@ -236,7 +236,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     }
   }
 
-  @deprecated("for debugging purposes")
+  @deprecated("for debugging purposes", "always")
   def LoadFromCSVFileWithKey(fileNameCSV: String, delimiter: Delimiter = Delimiter(";"))(implicit sc : SparkContext): Unit = {//} RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] = {
     try {
       def ToRDD(data : Iterator[(SpatialKey, (Int, Int, LabeledPoint))]) : RDD[(SpatialKey, (Int, Int, LabeledPoint))] = {

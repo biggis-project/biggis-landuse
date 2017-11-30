@@ -6,9 +6,11 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.HistogramDoubleFormat
 import geotrellis.raster.resample.Bilinear
+import geotrellis.raster.resample.ResampleMethod
 import geotrellis.spark.LayerId
 import geotrellis.spark.io.AttributeStore
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
 
 import scala.collection.JavaConverters._
 
@@ -19,22 +21,23 @@ object Utils extends LazyLogging {
 
   val TILE_SIZE = 256
   val RDD_PARTITIONS = 32
-  val RESAMPLING_METHOD = Bilinear
+  val RESAMPLING_METHOD: ResampleMethod = Bilinear
 
   def initSparkAutoContext: SparkContext = {
     logger info s"initSparkAutoContext "
-    val args:List[String] = ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.toList
+    val args: List[String] = ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.toList
 
-    return args.find(_ == "-Dspark.master=local[*]") match {
-      case Some(_) => {
+    args.find(_ == "-Dspark.master=local[*]") match {
+
+      case Some(_) =>
         logger info s"calling initSparkContext"
         initSparkContext
-      }
+
       case None => initSparkClusterContext
     }
   }
 
-  @deprecated("do not use, only for dirty debugging")
+  @deprecated("do not use, only for dirty debugging", "Sep 2017")
   def initLocalSparkContext: SparkContext = {
     val sparkConf = new SparkConf()
     sparkConf.setAppName("Geotrellis Example")
@@ -42,7 +45,7 @@ object Utils extends LazyLogging {
     sparkConf.set("spark.kryo.registrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     sparkConf.setMaster("local[*]")
 
-    return new SparkContext(sparkConf)
+    new SparkContext(sparkConf)
   }
 
   def initSparkContext: SparkContext = {
@@ -56,7 +59,7 @@ object Utils extends LazyLogging {
     // we can use the JVM parameter: -Dspark.master=local[*]
     // sparkConf.setMaster("local[*]")
 
-    return new SparkContext(sparkConf)
+    new SparkContext(sparkConf)
   }
 
   def initSparkClusterContext: SparkContext = {
@@ -72,7 +75,7 @@ object Utils extends LazyLogging {
     // we can use the JVM parameter: -Dspark.master=local[*]
     // sparkConf.setMaster("local[*]")
 
-    return new SparkContext(sparkConf)
+    new SparkContext(sparkConf)
   }
 
   def writeHistogram(attributeStore: AttributeStore, layerName: String, histogram: Histogram[Double]): Unit = {

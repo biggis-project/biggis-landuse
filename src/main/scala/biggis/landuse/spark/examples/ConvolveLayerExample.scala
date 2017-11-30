@@ -15,7 +15,8 @@ import geotrellis.spark.io.spatialKeyAvroFormat
 import geotrellis.spark.io.tileLayerMetadataFormat
 import geotrellis.spark.io.tileUnionCodec
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkContext, SparkException}
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
 
 object ConvolveLayerExample extends LazyLogging {
@@ -52,8 +53,8 @@ object ConvolveLayerExample extends LazyLogging {
     val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
     logger debug s"The following layerId will be used: $srcLayerId"
 
-    val queryResult: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReader
-      .read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](srcLayerId)
+    val queryResult: RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+      layerReader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](srcLayerId)
 
     val focalKernel = Kernel.circle(circleKernelRadius, queryResult.metadata.cellwidth, circleKernelRadius)
     logger info s"extent of focalKernel is ${focalKernel.extent}"

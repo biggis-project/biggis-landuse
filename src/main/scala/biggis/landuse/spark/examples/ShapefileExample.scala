@@ -9,7 +9,7 @@ import org.apache.spark.SparkException
  * Needs additional dependencies from external repositories
  * see: http://stackoverflow.com/questions/16225573/why-cant-i-resolve-the-dependencies-for-geotools-maven-quickstart
  */
-@deprecated("old version will be deleted after pending pull request from geotrellis")
+@deprecated("old version will be deleted after pending pull request from geotrellis", "always")
 object ShapefileExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {

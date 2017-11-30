@@ -20,7 +20,7 @@ import org.apache.spark.{SparkContext, SparkException}
   * - all tiles are stored as a layer in geotrellis catalog
   * - histogram data are stored as an attribute in the catalog (into zoom level 0)
   */
-@deprecated("for debugging only (keeps original projection - no WebMercator)")
+@deprecated("for debugging only (keeps original projection - no WebMercator)", "always")
 object MultibandGeotiffToLayerNoReproj extends LazyLogging {
 
   /**
