@@ -193,7 +193,7 @@ package object api extends LazyLogging {
 
       logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
       writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)*/
-      val rdd : RDD[(K, V)] with Metadata[M] = RDD[(K, V)]
+      val rdd : RDD[(K, V)] with Metadata[M] = sc.emptyRDD[(K, V)].asInstanceOf[RDD[(K, V)] with Metadata[M]]
       rdd
 
     } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey]&& ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
@@ -201,7 +201,7 @@ package object api extends LazyLogging {
       logger debug s"Reading using SpaceTimeKey + HilbertKeyIndexMethod + Tile ..."
       /*val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
       writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))*/
-      val rdd : RDD[(K, V)] with Metadata[M] = RDD[(K, V)]
+      val rdd : RDD[(K, V)] with Metadata[M] = sc.emptyRDD[(K, V)].asInstanceOf[RDD[(K, V)] with Metadata[M]]
       rdd
 
     } else if(ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
@@ -226,18 +226,18 @@ package object api extends LazyLogging {
           }
         }
         catch { case _: Throwable => null }
-      rdd
+      rdd.asInstanceOf[RDD[(K, V)] with Metadata[M]]
 
     } else if(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
 
       logger debug s"Reading using SpaceTimeKey + HilbertKeyIndexMethod + MultibandTile ..."
       /*val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
       writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))*/
-      val rdd : RDD[(K, V)] with Metadata[M] = RDD[(K, V)]
+      val rdd : RDD[(K, V)] with Metadata[M] = sc.emptyRDD[(K, V)].asInstanceOf[RDD[(K, V)] with Metadata[M]]
       rdd
 
     } else {
-      val rdd : RDD[(K, V)] with Metadata[M] = RDD[(K, V)]
+      val rdd : RDD[(K, V)] with Metadata[M] = sc.emptyRDD[(K, V)].asInstanceOf[RDD[(K, V)] with Metadata[M]]
       if ((ttagKey.tpe =:= typeOf[SpatialKey] && !(ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]))
         || (ttagKey.tpe =:= typeOf[SpaceTimeKey] && !(ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]))) {
         throw new RuntimeException("we did not expect any other key with meta combination than SpatialKey with TileLayerMetadata[SpatialKey] or SpaceTimeKey with TileLayerMetadata[SpaceTimeKey] ")
