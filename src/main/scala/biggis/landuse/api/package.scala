@@ -193,8 +193,24 @@ package object api extends LazyLogging {
 
       logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
       writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)*/
-      val rdd : RDD[(K, V)] with Metadata[M] = sc.emptyRDD[(K, V)].asInstanceOf[RDD[(K, V)] with Metadata[M]]
-      rdd
+      val rdd : RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+        try {
+          val header = reader.attributeStore.readHeader[LayerHeader](layerId)
+          assert(header.keyClass == "geotrellis.spark.SpatialKey")
+          if (header.valueClass == "geotrellis.raster.MultibandTile"){
+            //assert(header.valueClass == "geotrellis.raster.MultibandTile")
+            reader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
+              .withContext { rdd =>
+                rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(0)) }
+              }
+          }
+          else {
+            assert(header.valueClass == "geotrellis.raster.Tile")
+            reader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
+          }
+        }
+        catch { case _: Throwable => null }
+      rdd.asInstanceOf[RDD[(K, V)] with Metadata[M]]
 
     } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey]&& ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
 
@@ -213,8 +229,8 @@ package object api extends LazyLogging {
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpatialKey")
-          //assert(header.valueClass == "geotrellis.raster.Tile")
           if (header.valueClass == "geotrellis.raster.Tile"){
+            //assert(header.valueClass == "geotrellis.raster.Tile")
             reader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
               .withContext { rdd =>
                 rdd.map { case (spatialKey, tile) => (spatialKey, ArrayMultibandTile(tile)) }
