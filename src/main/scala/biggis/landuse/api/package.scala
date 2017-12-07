@@ -178,7 +178,7 @@ package object api extends LazyLogging {
     */
   def readRddFromLayer[K, V, M]
   (layerId: LayerId)
-  (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagValue: TypeTag[V], ttagMeta: TypeTag[M], returnType: RDD[(TypeTag[K], TypeTag[V])] with Metadata[TypeTag[M]]): RDD[(K, V)] with Metadata[M] = {
+  (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagValue: TypeTag[V], ttagMeta: TypeTag[M]): RDD[(K, V)] with Metadata[M] = {
 
     logger debug s"Reading RDD from layer '${layerId.name}' at zoom level ${layerId.zoom} ..."
 
