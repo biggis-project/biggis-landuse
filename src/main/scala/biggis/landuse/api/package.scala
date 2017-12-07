@@ -187,18 +187,12 @@ package object api extends LazyLogging {
     val rdd : RDD[(K, V)] with Metadata[M] =
     if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
 
-      logger debug s"Reading using SpatialKey (+ ZCurveKeyIndexMethod) + Tile ..."
-      /*val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]]
-      writer.write(layerId, rdd2, ZCurveKeyIndexMethod)
-
-      logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
-      writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)*/
+      logger debug s"Reading using SpatialKey + Tile ..." // (+ ZCurveKeyIndexMethod)
       val rdd : RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]] =
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpatialKey")
           if (header.valueClass == "geotrellis.raster.MultibandTile"){
-            //assert(header.valueClass == "geotrellis.raster.MultibandTile")
             reader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
               .withContext { rdd =>
                 rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(0)) } // for Tile read only first band of MultibandTile
@@ -214,15 +208,12 @@ package object api extends LazyLogging {
 
     } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey]&& ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
 
-      logger debug s"Reading using SpaceTimeKey (+ HilbertKeyIndexMethod) + Tile ..."
-      /*val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
-      writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))*/
+      logger debug s"Reading using SpaceTimeKey + Tile ..." // (+ HilbertKeyIndexMethod)
       val rdd : RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]] =
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpaceTimeKey")
           if (header.valueClass == "geotrellis.raster.MultibandTile"){
-            //assert(header.valueClass == "geotrellis.raster.MultibandTile")
             reader.read[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId)
               .withContext { rdd =>
                 rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(0)) } // for Tile read only first band of MultibandTile
@@ -238,15 +229,12 @@ package object api extends LazyLogging {
 
     } else if(ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
 
-      logger debug s"Reading using SpatialKey (+ ZCurveKeyIndexMethod) + MultibandTile ..."
-      /*val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
-      writer.write(layerId, rdd2, ZCurveKeyIndexMethod)*/
+      logger debug s"Reading using SpatialKey + MultibandTile ..."  // (+ ZCurveKeyIndexMethod)
       val rdd : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpatialKey")
           if (header.valueClass == "geotrellis.raster.Tile"){
-            //assert(header.valueClass == "geotrellis.raster.Tile")
             reader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
               .withContext { rdd =>
                 rdd.map { case (spatialKey, tile) => (spatialKey, ArrayMultibandTile(tile)) } // for MultibandTile read single band of Tile wrapped by ArrayMultibandTile
@@ -262,15 +250,12 @@ package object api extends LazyLogging {
 
     } else if(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
 
-      logger debug s"Reading using SpaceTimeKey (+ HilbertKeyIndexMethod) + MultibandTile ..."
-      /*val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
-      writer.write(layerId, rdd2, HilbertKeyIndexMethod(1))*/
+      logger debug s"Reading using SpaceTimeKey + MultibandTile ..."  // (+ HilbertKeyIndexMethod)
       val rdd : RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]] =
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpaceTimeKey")
           if (header.valueClass == "geotrellis.raster.Tile"){
-            //assert(header.valueClass == "geotrellis.raster.Tile")
             reader.read[SpaceTimeKey, Tile, TileLayerMetadata[SpaceTimeKey]](layerId)
               .withContext { rdd =>
                 rdd.map { case (spatialKey, tile) => (spatialKey, ArrayMultibandTile(tile)) } // for MultibandTile read single band of Tile wrapped by ArrayMultibandTile
