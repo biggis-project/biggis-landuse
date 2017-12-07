@@ -184,6 +184,11 @@ package object api extends LazyLogging {
 
     val reader = HadoopLayerReader(new Path(catalogPath))
 
+    if(!reader.attributeStore.layerExists(layerId)){
+      logger error s"Layer '${layerId.name}' not found (at zoom level ${layerId.zoom}) ..."
+      throw new RuntimeException(s"Error: Layer '${layerId.name}' not found (at zoom level ${layerId.zoom}) ...")
+    }
+
     val rdd : RDD[(K, V)] with Metadata[M] =
     if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
 
