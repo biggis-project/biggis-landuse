@@ -172,12 +172,13 @@ package object api extends LazyLogging {
 
   /**
     * @param layerId     layerName and zoom level
+    * @param bandNumber  Optional: select specific band number from layer (only applies to reading MultibandTile as Tile, ignored otherwise), defaults to 0 (first band) if None
     * @param catalogPath Geotrellis catalog
     * @param sc          SparkContext
     * @return            RDD[(K, V)] with Metadata[M] representing a layer of tiles
     */
   def readRddFromLayer[K, V, M]
-  (layerId: LayerId)
+  (layerId: LayerId, bandNumber : Option[Int] = None : Option[Int])
   (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagValue: TypeTag[V], ttagMeta: TypeTag[M]): RDD[(K, V)] with Metadata[M] = {
 
     logger debug s"Reading RDD from layer '${layerId.name}' at zoom level ${layerId.zoom} ..."
@@ -198,9 +199,10 @@ package object api extends LazyLogging {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpatialKey")
           if (header.valueClass == "geotrellis.raster.MultibandTile"){
+            val bandNo = bandNumber getOrElse 0 //Optional: select specific band number from layer, default: 0 (first band)
             reader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
               .withContext { rdd =>
-                rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(0)) } // for Tile read only first band of MultibandTile
+                rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(bandNo)) } // for Tile read only first band of MultibandTile
               }
           }
           else {
@@ -219,9 +221,10 @@ package object api extends LazyLogging {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpaceTimeKey")
           if (header.valueClass == "geotrellis.raster.MultibandTile"){
+            val bandNo = bandNumber getOrElse 0 //Optional: select specific band number from layer, default: 0 (first band)
             reader.read[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId)
               .withContext { rdd =>
-                rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(0)) } // for Tile read only first band of MultibandTile
+                rdd.map { case (spatialKey, tile) => (spatialKey, tile.band(bandNo)) } // for Tile read only first band of MultibandTile
               }
           }
           else {
