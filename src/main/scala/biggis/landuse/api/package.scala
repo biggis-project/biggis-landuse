@@ -197,7 +197,6 @@ package object api extends LazyLogging {
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpatialKey")
-          assert(header.keyClass == "geotrellis.spark.io.index.ZCurveKeyIndexMethod")
           if (header.valueClass == "geotrellis.raster.MultibandTile"){
             //assert(header.valueClass == "geotrellis.raster.MultibandTile")
             reader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
@@ -222,7 +221,6 @@ package object api extends LazyLogging {
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpaceTimeKey")
-          assert(header.keyClass == "geotrellis.spark.io.index.HilbertKeyIndexMethod")
           if (header.valueClass == "geotrellis.raster.MultibandTile"){
             //assert(header.valueClass == "geotrellis.raster.MultibandTile")
             reader.read[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId)
@@ -247,7 +245,6 @@ package object api extends LazyLogging {
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpatialKey")
-          assert(header.keyClass == "geotrellis.spark.io.index.ZCurveKeyIndexMethod")
           if (header.valueClass == "geotrellis.raster.Tile"){
             //assert(header.valueClass == "geotrellis.raster.Tile")
             reader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
@@ -272,7 +269,6 @@ package object api extends LazyLogging {
         try {
           val header = reader.attributeStore.readHeader[LayerHeader](layerId)
           assert(header.keyClass == "geotrellis.spark.SpaceTimeKey")
-          assert(header.keyClass == "geotrellis.spark.io.index.HilbertKeyIndexMethod")
           if (header.valueClass == "geotrellis.raster.Tile"){
             //assert(header.valueClass == "geotrellis.raster.Tile")
             reader.read[SpaceTimeKey, Tile, TileLayerMetadata[SpaceTimeKey]](layerId)
