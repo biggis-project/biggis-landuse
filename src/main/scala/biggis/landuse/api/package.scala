@@ -31,10 +31,10 @@ import scala.reflect.runtime.universe._
   */
 package object api extends LazyLogging {
 
-  type SpatialRDD = RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]
-  type SpaceTimeRDD = RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]
-  type SpatialMultibandRDD = RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]
-  type SpaceTimeMultibandRDD = RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]
+  type SpatialRDD = RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]  //TileLayerRDD[SpatialKey]
+  type SpaceTimeRDD = RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]  //TileLayerRDD[SpaceTimeKey]
+  type SpatialMultibandRDD = RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]  //MultibandTileLayerRDD[SpatialKey]
+  type SpaceTimeMultibandRDD = RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]  //MultibandTileLayerRDD[SpaceTimeKey]
 
   /**
     * Converts RemoteIterator from Hadoop to Scala Iterator that provides all the familiar functions such as map,
