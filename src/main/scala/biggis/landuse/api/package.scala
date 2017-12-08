@@ -299,4 +299,17 @@ package object api extends LazyLogging {
 
     rdd
   }
+
+  /**
+    * Checks if the layer / zoom level does exist
+    * @param layerId     layerName and zoom level
+    * @param catalogPath Geotrellis catalog
+    * @param sc          SparkContext
+    * @return            Boolean true if layer exists, false otherwise
+    */
+  def layerExists(layerId: LayerId)
+                 (implicit catalogPath: String, sc: SparkContext) : Boolean = {
+    HadoopLayerReader(new Path(catalogPath)).attributeStore.layerExists(layerId)
+  }
+
 }
