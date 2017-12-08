@@ -11,6 +11,8 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.rdd.RDD
 import biggis.landuse.api
+import biggis.landuse.api.SpatialMultibandRDD
+import org.apache.spark.sql.catalog.Catalog
 
 /**
   * Created by vlx on 1/19/17.
@@ -50,7 +52,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
 
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
-    implicit val attributeStore = HadoopAttributeStore(catalogPathHdfs)
+    implicit val attributeStore : HadoopAttributeStore = HadoopAttributeStore(catalogPathHdfs)
     val layerReader = HadoopLayerReader(attributeStore)
 
     //val commonZoom = Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2))
@@ -62,6 +64,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
 
     println(s"$layerId1, $layerId2")
 
+    /*
     val tiles1: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
       //layerReader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId1)
       layerReaderMB(layerId1)(layerReader)
@@ -69,6 +72,9 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     val tiles2: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
       //layerReader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId2)
       layerReaderMB(layerId2)(layerReader)
+    */
+    val tiles1 : SpatialMultibandRDD = biggis.landuse.api.readRddFromLayer(layerId1)
+    val tiles2 : SpatialMultibandRDD = biggis.landuse.api.readRddFromLayer(layerId2)
 
     val outTiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
       stack2MBlayers(tiles1,tiles2)
@@ -105,10 +111,10 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     val catalogPathHdfs = new Path(catalogPath)
     implicit val attributeStore = HadoopAttributeStore(catalogPathHdfs)
     */
-    implicit val attributeStore = biggis.landuse.api.catalogToStore(catalogPath)
-    implicit val layerReader = HadoopLayerReader(attributeStore)
+    implicit val attributeStore : HadoopAttributeStore = biggis.landuse.api.catalogToStore(catalogPath)
+    implicit val layerReader : HadoopLayerReader = HadoopLayerReader(attributeStore)
 
-    implicit val commonZoom = findFinestZoom(layerNames)  //Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2)
+    implicit val commonZoom : Int = findFinestZoom(layerNames)  //Math.max(findFinestZoom(layerName1), findFinestZoom(layerName2)
     logger info s"using zoom level $commonZoom"
 
     val outTiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = createLayerStack(layerNames)
@@ -142,7 +148,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
       logger info s"Layer not found: $layerName"
       throw new RuntimeException(s"Layer not found : $layerName")
     }
-    zoomsOfLayer.sortBy(_.zoom).last.zoom
+    zoomsOfLayer.maxBy(_.zoom).zoom  //.sortBy(_.zoom).last.zoom
   }
 
   def findLayerIdByNameAndZoom(layerName: String, zoom: Int)(implicit attributeStore: HadoopAttributeStore): LayerId = {
@@ -150,6 +156,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     zoomsOfLayer.filter(_.zoom == zoom).head
   }
 
+  /*
   def layerReaderMB(layerId: LayerId)(implicit layerReader: HadoopLayerReader) : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
     try {
       //val schema = layerReader.attributeStore.readSchema(layerId)
@@ -171,6 +178,7 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
     }
     catch { case _: Throwable => null }
   }
+  */
 
   def findFinestZoom(layerNames: Iterable[String])(implicit attributeStore: HadoopAttributeStore) : Int = {
     var commonZoom: Int = 0
@@ -199,12 +207,37 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
       }
     tilesmerged
   }
-  def createLayerStack(layerNames: Array[String])(implicit commonZoom: Int, attributeStore: HadoopAttributeStore, layerReader: HadoopLayerReader): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
+
+  /* *
+    * Read leayer from RDD
+    * @param layerId     layerName and zoom level
+    * @param bandNumber  Optional: select specific band number from layer (only applies to reading MultibandTile as Tile, ignored otherwise), defaults to 0 (first band) if None
+    * @param catalogPath Geotrellis catalog
+    * @param sc          SparkContext
+    * @return            RDD[(K, V)] with Metadata[M] representing a layer of tiles
+    * /
+  def readRddFromLayerT[T]
+  (layerId: LayerId, bandNumber : Option[Int] = None : Option[Int])
+  (implicit catalogPath: String, sc: SparkContext, ttag : TypeTag[T]): T = {
+    if(ttag.tpe =:= typeOf[SpatialRDD]) readRddFromLayer[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId).asInstanceOf[T]
+    else if(ttag.tpe =:= typeOf[SpatialMultibandRDD]) readRddFromLayer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId).asInstanceOf[T]
+    else if(ttag.tpe =:= typeOf[SpaceTimeMultibandRDD]) readRddFromLayer[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId).asInstanceOf[T]
+    else if(ttag.tpe =:= typeOf[SpaceTimeRDD]) readRddFromLayer[SpaceTimeKey, Tile, TileLayerMetadata[SpaceTimeKey]](layerId).asInstanceOf[T]
+    else {
+      throw new RuntimeException("we did not expect any other type than SpatialRDD, SpaceTimeRDD, SpatialMultibandRDD, SpaceTimeMultibandRDD")
+      sc.emptyRDD[(T, T)].asInstanceOf[T]
+    }
+  }
+  */
+
+  def createLayerStack(layerNames: Array[String])(implicit commonZoom: Int, catalogPath: String/*attributeStore: HadoopAttributeStore, layerReader: HadoopLayerReader*/, sc: SparkContext): RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
     var tilesmerged : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = null
     layerNames.foreach( layerName => {
       logger info s"Reading Layer $layerName"
-      if (attributeStore.layerExists(layerName,commonZoom)) {
-        var tiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReaderMB(getLayerId(layerName))(layerReader)
+      if (biggis.landuse.api.layerExists(LayerId(layerName, commonZoom))/*attributeStore.layerExists(layerName,commonZoom)*/) {
+        //var tiles: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = layerReaderMB(getLayerId(layerName))(layerReader)
+        //val tiles: SpatialMultibandRDD = biggis.landuse.api.readRddFromLayerT[SpatialMultibandRDD]((layerName, commonZoom))
+        val tiles: SpatialMultibandRDD = biggis.landuse.api.readRddFromLayer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]]((layerName, commonZoom))
         if (tilesmerged == null) {
           tilesmerged = tiles
         } else {

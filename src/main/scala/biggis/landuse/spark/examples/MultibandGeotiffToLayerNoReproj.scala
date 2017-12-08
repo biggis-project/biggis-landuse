@@ -29,7 +29,7 @@ object MultibandGeotiffToLayerNoReproj extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(inputPath, layerName, catalogPath) = args
-      implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
+      implicit val sc : SparkContext = Utils.initSparkAutoContext  // do not use - only for dirty debugging
       MultibandGeotiffToLayerNoReproj(inputPath, layerName)(catalogPath, sc)
       sc.stop()
       logger debug "Spark context stopped"
@@ -71,6 +71,8 @@ object MultibandGeotiffToLayerNoReproj extends LazyLogging {
     val (zoom, reprojected) =
       MultibandTileLayerRDD(tiled, myRasterMetaData).reproject(crs, layoutScheme, Utils.RESAMPLING_METHOD)
 
+    biggis.landuse.api.writeRddToLayer(reprojected, LayerId(layerName, zoom))
+    /*
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(catalogPathHdfs)
@@ -89,6 +91,7 @@ object MultibandGeotiffToLayerNoReproj extends LazyLogging {
     writer.write(layerId, reprojected, ZCurveKeyIndexMethod)
 
     //Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
+    */
 
     //sc.stop()
     logger info "done."

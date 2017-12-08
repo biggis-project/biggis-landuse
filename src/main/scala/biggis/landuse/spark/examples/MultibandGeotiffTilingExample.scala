@@ -40,7 +40,7 @@ object MultibandGeotiffTilingExample extends LazyLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(inputPath, layerName, catalogPath) = args
-      implicit val sc = Utils.initSparkAutoContext
+      implicit val sc : SparkContext = Utils.initSparkAutoContext
       MultibandGeotiffTilingExample(inputPath, layerName)(catalogPath, sc)
       sc.stop()
     } catch {
@@ -69,6 +69,8 @@ object MultibandGeotiffTilingExample extends LazyLogging {
     val (zoom, reprojected) =
       MultibandTileLayerRDD(tiled, myRasterMetaData).reproject(WebMercator, layoutScheme, Utils.RESAMPLING_METHOD)
 
+    biggis.landuse.api.writeRddToLayer(reprojected, LayerId(layerName, zoom))
+    /*
     // Create the attributes store that will tell us information about our catalog.
     val catalogPathHdfs = new Path(catalogPath)
     val attributeStore = HadoopAttributeStore(catalogPathHdfs)
@@ -87,6 +89,7 @@ object MultibandGeotiffTilingExample extends LazyLogging {
     writer.write(layerId, reprojected, ZCurveKeyIndexMethod)
 
     //Utils.writeHistogram(attributeStore, layerName, reprojected.histogram)
+    */
 
     //sc.stop()
     logger info "done."

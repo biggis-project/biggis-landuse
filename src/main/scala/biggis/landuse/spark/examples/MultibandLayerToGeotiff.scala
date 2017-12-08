@@ -1,5 +1,4 @@
 package biggis.landuse.spark.examples
-
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.{Tile, withTileMethods}
 import geotrellis.spark.{LayerId, Metadata, SpatialKey, TileLayerMetadata}
@@ -16,6 +15,7 @@ import geotrellis.spark.tiling.{FloatingLayoutScheme, LayoutDefinition, ZoomedLa
 import geotrellis.spark.{io => _, _}
 import geotrellis.vector.Extent
 import org.apache.hadoop.fs.Path
+import biggis.landuse.api.SpatialMultibandRDD
 
 // https://github.com/geotrellis/geotrellis/blob/master/docs/spark/spark-examples.md
 
@@ -24,11 +24,11 @@ object MultibandLayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {
       //val Array(layerName, outputPath, catalogPath) = args
-      val (layerNameArray,Array(outputPath, catalogPath)) = (args.take(args.size - 2),args.drop(args.size - 2))
+      val (layerNameArray,Array(outputPath, catalogPath)) = (args.take(args.length - 2),args.drop(args.length - 2))
       val (layerName: String, zoomLevel: Int) =
-        if(layerNameArray.size == 2) layerNameArray
-        else if (layerNameArray.size == 1) (layerNameArray(0),-1)
-      implicit val sc = Utils.initSparkAutoContext  // do not use - only for dirty debugging
+        if(layerNameArray.length == 2) layerNameArray
+        else if (layerNameArray.length == 1) (layerNameArray(0),-1)
+      implicit val sc : SparkContext = Utils.initSparkAutoContext  // do not use - only for dirty debugging
       MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc, zoomLevel)
       sc.stop()
       logger debug "Spark context stopped"
@@ -53,10 +53,10 @@ object MultibandLayerToGeotiff extends LazyLogging{
     }
 
     val srcLayerId =
-      if(zoomLevel < 0) zoomsOfLayer.sortBy(_.zoom).last
+      if(zoomLevel < 0) zoomsOfLayer.maxBy(_.zoom) //.sortBy(_.zoom).last
       else {
         val zoomLevels = zoomsOfLayer.filter(_.zoom == zoomLevel)
-        if (zoomLevels.size == 1) zoomLevels.last
+        if (zoomLevels.lengthCompare(1) == 0) zoomLevels.last // if(zoomLevels.length == 1)
         else {
           logger info s"Layer '$layerName' with zoom '$zoomLevel' not found in the catalog '$catalogPath'"
           return
@@ -66,6 +66,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
     //val srcLayerId = zoomsOfLayer.sortBy(_.zoom).last
     logger debug s"The following layerId will be used: $srcLayerId"
 
+    val inputRdd : SpatialMultibandRDD = biggis.landuse.api.readRddFromLayer(srcLayerId)
     /*
     // ToDo: check if RDD is Tile or MultibandTile
     val (srcLayerMetadata, srcLayerSchema) =
@@ -81,6 +82,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
       case _: Throwable =>
     }
     */
+    /*
     val header = layerReader.attributeStore.readHeader[LayerHeader](srcLayerId)
     //assert(header.keyClass == "geotrellis.spark.SpatialKey")
     //assert(header.valueClass == "geotrellis.raster.Tile")
@@ -96,6 +98,7 @@ object MultibandLayerToGeotiff extends LazyLogging{
         assert(header.valueClass == "geotrellis.raster.MultibandTile")
         layerReader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](srcLayerId)
       }
+    */
 
 
     val metadata = inputRdd.metadata
