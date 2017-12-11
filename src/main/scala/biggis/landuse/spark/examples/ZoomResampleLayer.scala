@@ -3,7 +3,7 @@ package biggis.landuse.spark.examples
 import biggis.landuse.api.SpatialMultibandRDD
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.SinglebandGeoTiff
-import geotrellis.spark.{LayerId, TileLayerRDD, resample, _}
+import geotrellis.spark.{LayerId, MultibandTileLayerRDD, TileLayerRDD, resample, _}
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkException
 import geotrellis.spark.resample._
@@ -38,16 +38,22 @@ object ZoomResampleLayer extends LazyLogging {
 
     val inputRdd : SpatialMultibandRDD = biggis.landuse.api.readRddFromLayer((layerNameIn, zoomIn.toInt))
 
-    val countTilesIn = inputRdd.count()
+    //val countTilesIn = inputRdd.count()
 
-    val layer : TileLayerRDD[SpatialKey] = ContextRDD(inputRdd.distinct().asInstanceOf[TileLayerRDD[SpatialKey]], inputRdd.metadata)
+    //val layer : TileLayerRDD[SpatialKey] = ContextRDD(inputRdd.distinct().asInstanceOf[TileLayerRDD[SpatialKey]], inputRdd.metadata)
 
-    layer.resampleToZoom(zoomIn.toInt, zoomOut.toInt) // exists for Tile, but not for MultibandTile
+    //layer.resampleToZoom(zoomIn.toInt, zoomOut.toInt) // exists for Tile, but not for MultibandTile
 
-    val outputRdd : SpatialMultibandRDD = inputRdd  //.asInstanceOf[MultibandTileLayerRDD[SpatialKey]].resampleToZoom(zoomIn.toInt, zoomOut.toInt)
+    val outputRdd : SpatialMultibandRDD = //inputRdd//.asInstanceOf[MultibandTileLayerRDD[SpatialKey]].resampleToZoom(zoomIn.toInt, zoomOut.toInt)
+      resampleLayerToZoom(inputRdd, zoomIn.toInt, zoomOut.toInt)
 
     biggis.landuse.api.writeRddToLayer(outputRdd, LayerId(layerNameOut, zoomOut.toInt))
 
     logger info "done."
   }
+
+  implicit def resampleLayerToZoom(rdd: MultibandTileLayerRDD[SpatialKey], zoomLevelIn: Int, zoomLevelOut: Int)(implicit sc: SparkContext): MultibandTileLayerRDD[SpatialKey] = {
+    geotrellis.spark.resample.Implicits.withZoomResampleMultibandMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
+  }
+
 }
