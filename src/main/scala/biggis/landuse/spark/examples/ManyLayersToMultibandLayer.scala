@@ -241,7 +241,14 @@ object ManyLayersToMultibandLayer extends LazyLogging {  //extends App with Lazy
         if (tilesmerged == null) {
           tilesmerged = tiles
         } else {
-          tilesmerged = stack2MBlayers(tilesmerged, tiles)
+          if(tilesmerged.metadata.crs != tiles.metadata.crs){
+            logger info s"Mismatch crs: ${tilesmerged.metadata.crs.proj4jCrs.getDatum.getName} != ${tiles.metadata.crs.proj4jCrs.getDatum.getName} "
+            val (zoomlevel, tilesreproj) : (Int, SpatialMultibandRDD) = tiles.reproject(destCrs = tilesmerged.metadata.crs, layoutDefinition = tilesmerged.metadata.layout)
+            logger info s"Reproject crs: ${tiles.metadata.crs.proj4jCrs.getDatum.getName} to ${tilesmerged.metadata.crs.proj4jCrs.getDatum.getName} "
+            tilesmerged = stack2MBlayers(tilesmerged, tilesreproj)
+          }
+          else
+            tilesmerged = stack2MBlayers(tilesmerged, tiles)
         }
       }
       else {
