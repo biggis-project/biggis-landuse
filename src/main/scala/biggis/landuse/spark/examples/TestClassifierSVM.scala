@@ -2,6 +2,7 @@ package biggis.landuse.spark.examples
 
 
 import com.typesafe.scalalogging.StrictLogging
+import geotrellis.util.annotations.experimental
 import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.mllib.classification.{SVMModel, SVMMultiClassOVAModel, SVMWithSGD}
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
@@ -10,6 +11,7 @@ import org.apache.spark.mllib.util.MLUtils
 //https://github.com/Bekbolatov/spark
 import org.apache.spark.mllib.classification.{SVMMultiClassOVAModel, SVMMultiClassOVAWithSGD}
 
+@experimental // ToDo: replace SVMMultiClassOVAModel (experimental implementation based on Spark 1.6.2) by OneVsRest with LinearSVC (needs Spark 2.2, not implemented in Spark 2.1)
 object TestClassifierSVM extends StrictLogging {
   /**
     * Run as: /path/to/sample_libsvm_data.txt /path/to/myModel
@@ -19,7 +21,7 @@ object TestClassifierSVM extends StrictLogging {
   def main(args: Array[String]): Unit = {
     try {
       val Array(trainingName, modelPath) = args
-      implicit val sc = Utils.initSparkAutoContext
+      implicit val sc : SparkContext = Utils.initSparkAutoContext
       TestClassifierSVM(trainingName)(modelPath, sc)
       sc.stop()
     } catch {
@@ -61,7 +63,7 @@ object TestClassifierSVM extends StrictLogging {
     //logger info "Area under ROC = " + auROC
 
     val metrics = new MulticlassMetrics(scoreAndLabels)
-    val precision = metrics.precision
+    val precision = metrics.accuracy  //.precision
 
     logger info "Precision = " + precision
 
