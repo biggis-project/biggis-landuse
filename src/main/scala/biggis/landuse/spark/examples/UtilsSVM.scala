@@ -1,10 +1,12 @@
 package biggis.landuse.spark.examples
 
+import geotrellis.util.annotations.experimental
 import geotrellis.raster.{DoubleConstantNoDataCellType, MultibandTile}
 import geotrellis.spark.{Metadata, SpatialKey, TileLayerMetadata}
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.classification.SVMMultiClassOVAModel
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -15,7 +17,7 @@ import org.json4s.native.JsonMethods._
 /**
   * Renamed by ak on 26.01.2017.
   */
-@deprecated("do not use, except for debugging, replace by UtilsML", "always")
+@experimental //@deprecated("do not use, except for debugging, replace by UtilsML", "always")
 object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
   case class BandNoLabel(classBandNo: Int)
   def MultibandTile2xyLabeledPoint( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): RDD[(SpatialKey, (Int, Int, LabeledPoint))] = {
@@ -33,6 +35,23 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
       .map( sample => sample._2._3 )
       .filter(_.features.numNonzeros > 0)
     lp
+  }
+  def MultibandTile2xyMllibFeatures(tile: MultibandTile)(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): Iterable[(Int, Int, Vector)] = {
+    MultibandTile2PixelSamples(tile).map { case (x, y, features) =>
+      //val label = if(classBandNo.classBandNo >= 0 ) features(classBandNo.classBandNo) else Double.NaN
+      val featuresWithoutLabel = if(classBandNo.classBandNo >= 0 ) features.take(classBandNo.classBandNo) ::: features.drop(classBandNo.classBandNo + 1) else features
+      val featuresMllib = Vectors.dense(featuresWithoutLabel.toArray).compressed
+      (x, y, featuresMllib)
+    }
+  }
+  def MultibandTile2MllibFeatures( data : RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] )(implicit classBandNo : BandNoLabel = BandNoLabel(-1) ): RDD[(SpatialKey, (Int, Int, Vector))] with Metadata[TileLayerMetadata[SpatialKey]] = {
+    val samples: RDD[(SpatialKey, (Int, Int, Vector))] with Metadata[TileLayerMetadata[SpatialKey]] =
+      data.withContext { rdd =>
+        rdd.flatMapValues(mbtile =>
+          UtilsSVM.MultibandTile2xyMllibFeatures(mbtile)(classBandNo)
+        )
+      }
+    samples
   }
 
   def SplitSamples( samples : RDD[LabeledPoint], factor : Double): (RDD[LabeledPoint], RDD[LabeledPoint]) = {
@@ -55,10 +74,10 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     model_multi.save(sc, svmClassifier)
   }
 
-  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
+  @experimental //@experimental //@deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
   case class LabelPointSpatialRef(spatialKey: SpatialKey, offset: Int)
 
-  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
+  @experimental //@experimental //@deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
   def MultibandTile2LabelPoint(data: (SpatialKey, MultibandTile)): Array[(LabeledPoint, LabelPointSpatialRef)] = {
 
     val (spatialKey, tile) = data
@@ -83,7 +102,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     arrayLP
   }
 
-  @deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
+  @experimental //@deprecated("do not use, replace by UtilsML.MultibandTile2LabeledPixelSamples", "always")
   def MultibandTile2LabelPoint(rdd: RDD[(SpatialKey, MultibandTile)]): (RDD[LabeledPoint], RDD[LabelPointSpatialRef]) = {
     // ToDo: Select only pixels within training data
     val data_temp_with_spatialref: RDD[(LabeledPoint, LabelPointSpatialRef)] = rdd
@@ -96,7 +115,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     (data_temp, spatialref)
   }
 
-  @deprecated("do not use, replace by UtilsML.SaveAsLibSVMFile", "always")
+  @experimental //@deprecated("do not use, replace by UtilsML.SaveAsLibSVMFile", "always")
   def SaveAsLibSVMFile(data: (RDD[LabeledPoint], RDD[LabelPointSpatialRef]), trainingName: String): Unit = {
     try {
       UtilsML.SaveAsLibSVMFile(data._1, trainingName)
@@ -106,9 +125,9 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     }
   }
 
-  @deprecated("for debugging purposes", "always")
+  @experimental //@deprecated("for debugging purposes", "always")
   case class Delimiter(delimiter: String)
-  @deprecated("for debugging purposes", "always")
+  @experimental //@deprecated("for debugging purposes", "always")
   def SaveAsCSVFile(data: RDD[LabeledPoint], trainingName: String, delimiter: Delimiter = Delimiter(";"))(implicit removeZeroLabel: Boolean = false): Unit = {
     try {
       def SaveCSV(data: RDD[LabeledPoint], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
@@ -117,7 +136,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
           .coalesce(1, shuffle = true)
           .saveAsTextFile(trainingName)
       }
-      implicit val sc = data.sparkContext
+      implicit val sc : SparkContext = data.sparkContext
       val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
       val trainingPath = ParsePath(trainingName)
       val first_dir = trainingPath.dir_hierarchy.toArray.apply(1)
@@ -173,7 +192,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
 
   //@deprecated("for debugging purposes")
   //case class RDDKeyLabeledPoint( rdd : RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]])
-  @deprecated("for debugging purposes", "always")
+  @experimental //@deprecated("for debugging purposes", "always")
   def SaveAsCSVFileWithKey(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String, delimiter: Delimiter = Delimiter(";")): Unit = {
     try {
       def SaveCSV(data: RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]], trainingName: String)(implicit delimiter: Delimiter) : Unit = {
@@ -190,16 +209,16 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
         val extent = metadata.extent
         val crs = metadata.crs.toWKT()
         val bounds =  metadata.bounds.mkString(",")
-        val array : Array[String] = Array(cellType.toString()) ++ Array(layout.toString()) ++ Array(extent.toString()) ++ Array(crs.toString()) ++ Array(bounds.toString())
+        val array : Array[String] = Array(cellType.toString()) ++ Array(layout.toString()) ++ Array(extent.toString()) ++ Array(crs.toString) ++ Array(bounds.toString)
         val serialized_csv : String = array.mkString(delimiter.delimiter)
         //val json = array.toList
         val json = ("extent" -> extent.toString()) ~
           ("layoutDefinition" -> layout.toString()) ~
-          ("bounds" -> bounds.toString()) ~
+          ("bounds" -> bounds.toString) ~
           ("cellType" -> cellType.toString()) ~
-          ("crs" -> crs.toString())
+          ("crs" -> crs.toString)
         val serialized_json = compact(render(json))
-        def writeTextFile(text: String, filename: String)(implicit sc : SparkContext) = {
+        def writeTextFile(text: String, filename: String)(implicit sc : SparkContext) : Unit = {
           // Hadoop Config is accessible from SparkContext
           val fs = FileSystem.get(sc.hadoopConfiguration)
           // Output file can be created from file system.
@@ -211,7 +230,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
         //writeTextFile(serialized_csv, trainingMetaName)(data.sparkContext)
         writeTextFile(serialized_json, trainingMetaName)(data.sparkContext)
       }
-      implicit val sc = data.sparkContext
+      implicit val sc : SparkContext = data.sparkContext
       val hdfs = org.apache.hadoop.fs.FileSystem.get(sc.hadoopConfiguration)
       val trainingPath = ParsePath(trainingName)
       val first_dir = trainingPath.dir_hierarchy.toArray.apply(1)
@@ -236,7 +255,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
     }
   }
 
-  @deprecated("for debugging purposes", "always")
+  @experimental //@deprecated("for debugging purposes", "always")
   def LoadFromCSVFileWithKey(fileNameCSV: String, delimiter: Delimiter = Delimiter(";"))(implicit sc : SparkContext): Unit = {//} RDD[(SpatialKey, (Int, Int, LabeledPoint))] with Metadata[TileLayerMetadata[SpatialKey]] = {
     try {
       def ToRDD(data : Iterator[(SpatialKey, (Int, Int, LabeledPoint))]) : RDD[(SpatialKey, (Int, Int, LabeledPoint))] = {
@@ -274,6 +293,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
           .map( line => StringToLabeledPointWithKey(line)(delimiter))
         ToRDD(data.toIterator)
       }
+      data
     }
     catch {
       case _: Throwable =>
@@ -353,7 +373,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
       })
         .reduce( (left, right) => {
           val ((left_min,left_max),(right_min,right_max)) = (left, right)
-          val nbands = left_min.size
+          val nbands = left_min.length
           var (zonal_band_min,zonal_band_max): (Array[Double],Array[Double]) = (Array.fill[Double](nbands)(Double.MaxValue),Array.fill[Double](nbands)(Double.MinValue))
           for(i <- 0 until nbands){
             zonal_band_min.update(i,Math.min(left_min(i),right_min(i)))

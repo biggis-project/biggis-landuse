@@ -8,6 +8,7 @@ import geotrellis.spark.io.index.ZCurveKeyIndexMethod.spatialKeyIndexMethod
 import geotrellis.spark.io.{SpatialKeyFormat, spatialKeyAvroFormat, tileLayerMetadataFormat, tileUnionCodec}
 import geotrellis.spark.tiling.{FloatingLayoutScheme, ZoomedLayoutScheme}
 import geotrellis.spark.{LayerId, MultibandTileLayerRDD, TileLayerMetadata, TileLayerRDD, withProjectedExtentTilerKeyMethods, withTileRDDReprojectMethods, withTilerMethods}
+import geotrellis.util.annotations.experimental
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkContext, SparkException}
 
@@ -20,7 +21,7 @@ import org.apache.spark.{SparkContext, SparkException}
   * - all tiles are stored as a layer in geotrellis catalog
   * - histogram data are stored as an attribute in the catalog (into zoom level 0)
   */
-@deprecated("for debugging only (keeps original projection - no WebMercator)", "always")
+@experimental //@deprecated("for debugging only (keeps original projection - no WebMercator)", "always")
 object MultibandGeotiffToLayerNoReproj extends LazyLogging {
 
   /**

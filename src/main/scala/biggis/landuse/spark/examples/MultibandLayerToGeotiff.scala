@@ -16,10 +16,11 @@ import geotrellis.spark.{io => _, _}
 import geotrellis.vector.Extent
 import org.apache.hadoop.fs.Path
 import biggis.landuse.api.SpatialMultibandRDD
+import geotrellis.util.annotations.experimental
 
 // https://github.com/geotrellis/geotrellis/blob/master/docs/spark/spark-examples.md
 
-@deprecated("for debugging only (attention: writes many tiles, not single file)", "always")
+@experimental //@deprecated("for debugging only (attention: writes many tiles, not single file)", "always")
 object MultibandLayerToGeotiff extends LazyLogging{
   def main(args: Array[String]): Unit = {
     try {
