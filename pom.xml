@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>biggis</groupId>
   <artifactId>biggis-landuse</artifactId>
-  <version>0.0.5-SNAPSHOT</version>
+  <version>0.0.6-SNAPSHOT</version>
   <name>${project.artifactId}</name>
   <description>Land use update detection based on Geotrellis and Spark</description>
   <inceptionYear>2017</inceptionYear>
