@@ -68,7 +68,7 @@ object Utils extends LazyLogging {
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
     //TODO: get rid of the hardcoded JAR
-    sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.5-SNAPSHOT.jar"))
+    sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.6-SNAPSHOT.jar"))
 
     // We also need to set the spark master.
     // instead of  hardcoding it using sparkConf.setMaster("local[*]")
