@@ -312,4 +312,69 @@ package object api extends LazyLogging {
     HadoopLayerReader(new Path(catalogPath)).attributeStore.layerExists(layerId)
   }
 
+  /**
+    * @param rdd         The RDD representing a processed layer of tiles
+    * @param layerId     layerName and zoom level
+    * @param catalogPath Geotrellis catalog
+    * @param sc          SparkContext
+    */
+  def mergeRddIntoLayer[K, V, M]
+  (rdd: RDD[(K, V)] with Metadata[M], layerId: LayerId)
+  (implicit catalogPath: String, sc: SparkContext, ttagKey: TypeTag[K], ttagValue: TypeTag[V], ttagMeta: TypeTag[M]): Unit = {
+
+    logger debug s"Writing RDD to layer '${layerId.name}' at zoom level ${layerId.zoom} ..."
+
+    // ToDo: check if Layer exists, check if ZoomLevel matches, if necessary use ZoomResampleLayer, add error handling
+
+    val writer = HadoopLayerWriter(new Path(catalogPath))
+    val reader = HadoopLayerReader(new Path(catalogPath))
+
+    // TODO: This code is really nasty, there must be a better way !!!
+    if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
+
+      logger debug s"Updating using SpatialKey + ZCurveKeyIndexMethod + Tile ..."
+      val rdd2 = rdd.asInstanceOf[SpatialRDD]
+      val existing = reader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
+      writer.overwrite(layerId, existing.merge(rdd2)) //ZCurveKeyIndexMethod
+
+      //logger debug s"Writing histogram of layer '${layerId.name}' to attribute store as 'histogramData' for zoom level 0"
+      //writer.attributeStore.write(LayerId(layerId.name, 0), "histogramData", rdd2.histogram)
+
+    } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagValue.tpe =:= typeOf[Tile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
+
+      logger debug s"Updating using SpaceTimeKey + HilbertKeyIndexMethod + Tile ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, Tile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
+      val existing = reader.read[SpaceTimeKey, Tile, TileLayerMetadata[SpaceTimeKey]](layerId)
+      writer.overwrite(layerId, existing.merge(rdd2)) //HilbertKeyIndexMethod(1)
+
+    } else if (ttagKey.tpe =:= typeOf[SpatialKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]) {
+
+      logger debug s"Updating using SpatialKey + ZCurveKeyIndexMethod + MultibandTile ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
+      val existing = reader.read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
+      writer.overwrite(layerId, existing.merge(rdd2)) //ZCurveKeyIndexMethod
+
+    } else if (ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagValue.tpe =:= typeOf[MultibandTile] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]) {
+
+      logger debug s"Updating using SpaceTimeKey + HilbertKeyIndexMethod + MultibandTile ..."
+      val rdd2 = rdd.asInstanceOf[RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]]
+      val existing = reader.read[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId)
+      writer.overwrite(layerId, existing.merge(rdd2)) //HilbertKeyIndexMethod(1)
+
+    } else if ((ttagKey.tpe =:= typeOf[SpatialKey] && !(ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]]))
+      || (ttagKey.tpe =:= typeOf[SpaceTimeKey] && !(ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]]))) {
+      throw new RuntimeException("we did not expect any other key with meta combination than SpatialKey with TileLayerMetadata[SpatialKey] or SpaceTimeKey with TileLayerMetadata[SpaceTimeKey] ")
+    } else if (!(ttagValue.tpe =:= typeOf[Tile]) && !(ttagValue.tpe =:= typeOf[MultibandTile])
+      && !(ttagKey.tpe =:= typeOf[SpatialKey] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpatialKey]])
+      && !(ttagKey.tpe =:= typeOf[SpaceTimeKey] && ttagMeta.tpe =:= typeOf[TileLayerMetadata[SpaceTimeKey]])) {
+      throw new RuntimeException("we did not expect any other key type than SpatialKey or SpaceTimeKey and any other tile type than Tile or MultibandTile")
+    } else if (!(ttagValue.tpe =:= typeOf[Tile]) && !(ttagValue.tpe =:= typeOf[MultibandTile])) {
+      throw new RuntimeException("we did not expect any other type than Tile or MultibandTile")
+    } else {
+      throw new RuntimeException("we did not expect any other type than SpatialKey or SpaceTimeKey")
+    }
+
+    logger debug s"Updating done..."
+  }
+
 }
