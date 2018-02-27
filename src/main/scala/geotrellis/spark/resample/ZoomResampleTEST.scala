@@ -25,8 +25,7 @@ import geotrellis.vector.Extent
 
 import org.apache.spark.rdd.RDD
 
-@deprecated ("replaced by ZoomResample")
-object ZoomResampleMultiband {
+object ZoomResampleTEST {
   private def gridBoundsAtZoom(sourceZoom: Int, spatialKey: SpatialKey, targetZoom: Int): GridBounds = {
     val SpatialKey(col, row) = spatialKey
     val zoomDiff = targetZoom - sourceZoom
@@ -62,28 +61,31 @@ object ZoomResampleMultiband {
     * @param       targetGridBounds Optionally, a grid bounds in the target zoom level we want to filter by.
     * @param       method           The resample method to use for resampling.
     */
-  def apply[K: SpatialComponent](
-    rdd: MultibandTileLayerRDD[K],
+  def apply[
+    K: SpatialComponent,
+    V <: CellGrid: (? => TileResampleMethods[V])
+  ](
+    rdd: RDD[(K, V)] with Metadata[TileLayerMetadata[K]],
     sourceZoom: Int,
     targetZoom: Int,
     targetGridBounds: Option[GridBounds] = None,
     method: ResampleMethod = NearestNeighbor
-  ): MultibandTileLayerRDD[K] = {
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] = {
     require(sourceZoom < targetZoom, "This resample call requires that the target zoom level be greater than the source zoom level")
     val tileSize = rdd.metadata.layout.tileLayout.tileCols
     val targetLayoutDefinition =
       ZoomedLayoutScheme.layoutForZoom(targetZoom, rdd.metadata.layout.extent, tileSize)
     val targetMapTransform = targetLayoutDefinition.mapTransform
     val sourceMapTransform = rdd.metadata.mapTransform
-    val (resampledRdd: RDD[(K, MultibandTile)], md) =
+    val (resampledRdd: RDD[(K, V)], md) =
       targetGridBounds match {
         case Some(tgb) =>
           val resampleKeyBounds: KeyBounds[K] =
             boundsAtZoom(sourceZoom, rdd.metadata.bounds, targetZoom).get
 
           resampleKeyBounds.toGridBounds.intersection(tgb) match {
-            case Some(resampleGridBounds) =>
-              val resampled: RDD[(K, MultibandTile)] = rdd.flatMap { case (key, tile) =>
+            case Some(resampleGridBounds) => {
+              val resampled: RDD[(K, V)] = rdd.flatMap { case (key, tile) =>
                 val gbaz: Option[GridBounds] =
                   gridBoundsAtZoom(sourceZoom, key.getComponent[SpatialKey], targetZoom)
                     .intersection(resampleGridBounds)
@@ -114,18 +116,18 @@ object ZoomResampleMultiband {
               )
 
               (resampled, md)
-
-            case None =>
+            }
+            case None => {
               val md = rdd.metadata.copy(
                 layout = targetLayoutDefinition,
-                bounds = EmptyBounds: Bounds[K]
+                bounds = (EmptyBounds: Bounds[K])
               )
 
-              (rdd.sparkContext.emptyRDD[(K, MultibandTile)], md)
-
+              (rdd.sparkContext.emptyRDD[(K, V)], md)
+            }
           }
-        case None =>
-          val resampled: RDD[(K, MultibandTile)] =
+        case None => {
+          val resampled: RDD[(K, V)] =
             rdd
               .flatMap { case (key, tile) =>
                 gridBoundsAtZoom(sourceZoom, key.getComponent[SpatialKey], targetZoom)
@@ -146,7 +148,7 @@ object ZoomResampleMultiband {
 
           (resampled, md)
         }
-
+      }
 
     ContextRDD(resampledRdd, md)
   }

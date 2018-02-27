@@ -19,30 +19,34 @@ package geotrellis.spark.resample
 import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.spark._
-import geotrellis.spark.tiling.ZoomedLayoutScheme
-import geotrellis.util.MethodExtensions
+import geotrellis.spark.tiling.{ZoomedLayoutScheme, LayoutDefinition}
+import geotrellis.util._
 import geotrellis.vector.Extent
 
-@deprecated ("replaced by LayerRDDZoomResampleMethods")
-abstract class ZoomResampleMultibandMethods[K: SpatialComponent](val self: MultibandTileLayerRDD[K]) extends MethodExtensions[MultibandTileLayerRDD[K]] {
+import org.apache.spark.rdd._
+
+abstract class LayerRDDZoomResampleMethods[
+  K: SpatialComponent,
+  V <: CellGrid: (? => TileResampleMethods[V])
+](val self: RDD[(K, V)] with Metadata[TileLayerMetadata[K]]) extends MethodExtensions[RDD[(K, V)] with Metadata[TileLayerMetadata[K]]] {
   def resampleToZoom(
     sourceZoom: Int,
     targetZoom: Int
-  ): MultibandTileLayerRDD[K] =
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] =
     resampleToZoom(sourceZoom, targetZoom, None, NearestNeighbor)
 
   def resampleToZoom(
     sourceZoom: Int,
     targetZoom: Int,
     method: ResampleMethod
-  ): MultibandTileLayerRDD[K] =
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] =
     resampleToZoom(sourceZoom, targetZoom, None, method)
 
   def resampleToZoom(
     sourceZoom: Int,
     targetZoom: Int,
     targetGridBounds: GridBounds
-  ): MultibandTileLayerRDD[K] =
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] =
     resampleToZoom(sourceZoom, targetZoom, Some(targetGridBounds), NearestNeighbor)
 
   def resampleToZoom(
@@ -50,14 +54,14 @@ abstract class ZoomResampleMultibandMethods[K: SpatialComponent](val self: Multi
     targetZoom: Int,
     targetGridBounds: GridBounds,
     method: ResampleMethod
-  ): MultibandTileLayerRDD[K] =
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] =
     resampleToZoom(sourceZoom, targetZoom, Some(targetGridBounds), method)
 
   def resampleToZoom(
     sourceZoom: Int,
     targetZoom: Int,
     targetExtent: Extent
-  ): MultibandTileLayerRDD[K] =
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] =
     resampleToZoom(sourceZoom, targetZoom, targetExtent, NearestNeighbor)
 
   def resampleToZoom(
@@ -65,7 +69,7 @@ abstract class ZoomResampleMultibandMethods[K: SpatialComponent](val self: Multi
     targetZoom: Int,
     targetExtent: Extent,
     method: ResampleMethod
-  ): MultibandTileLayerRDD[K] = {
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] = {
     val layout = ZoomedLayoutScheme.layoutForZoom(targetZoom, self.metadata.layout.extent, self.metadata.layout.tileLayout.tileCols)
     val targetGridBounds = layout.mapTransform(targetExtent)
     resampleToZoom(sourceZoom, targetZoom, Some(targetGridBounds), method)
@@ -76,6 +80,6 @@ abstract class ZoomResampleMultibandMethods[K: SpatialComponent](val self: Multi
     targetZoom: Int ,
     targetGridBounds: Option[GridBounds] = None,
     method: ResampleMethod = NearestNeighbor
-  ): MultibandTileLayerRDD[K] =
-    ZoomResampleMultiband(self, sourceZoom, targetZoom, targetGridBounds, method)
+  ): RDD[(K, V)] with Metadata[TileLayerMetadata[K]] =
+    ZoomResampleTEST(self, sourceZoom, targetZoom, targetGridBounds, method)
 }

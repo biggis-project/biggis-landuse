@@ -41,7 +41,8 @@ object ZoomResampleLayer extends LazyLogging {
   }
 
   implicit def resampleLayerToZoom(rdd: MultibandTileLayerRDD[SpatialKey], zoomLevelIn: Int, zoomLevelOut: Int)(implicit sc: SparkContext): MultibandTileLayerRDD[SpatialKey] = {
-    geotrellis.spark.resample.Implicits.withZoomResampleMultibandMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
+    //geotrellis.spark.resample.Implicits.withZoomResampleMultibandMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
+    geotrellis.spark.resample.Implicits.withLayerRDDZoomResampleMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
   }
 
 }

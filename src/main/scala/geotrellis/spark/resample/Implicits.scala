@@ -16,10 +16,22 @@
 
 package geotrellis.spark.resample
 
+import geotrellis.raster._
+import geotrellis.raster.resample._
 import geotrellis.spark._
+import geotrellis.spark.tiling._
+import geotrellis.util._
+import geotrellis.vector._
+
+import org.apache.spark.rdd._
 
 object Implicits extends Implicits
 
 trait Implicits {
+  @deprecated ("replaced by withLayerRDDZoomResampleMethods")
   implicit class withZoomResampleMultibandMethods[K: SpatialComponent](self: MultibandTileLayerRDD[K]) extends ZoomResampleMultibandMethods[K](self)
+  implicit class withLayerRDDZoomResampleMethods[
+    K: SpatialComponent,
+    V <: CellGrid: (? => TileResampleMethods[V])
+  ](self: RDD[(K, V)] with Metadata[TileLayerMetadata[K]]) extends LayerRDDZoomResampleMethods[K, V](self)
 }
