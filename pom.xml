@@ -325,6 +325,16 @@
             </configuration>
           </execution>
         </executions>
+        <!-- see https://github.com/non/kind-projector -->
+        <configuration>
+          <compilerPlugins>
+            <compilerPlugin>
+              <groupId>org.spire-math</groupId>
+              <artifactId>kind-projector_2.11</artifactId>
+              <version>0.9.6</version>
+            </compilerPlugin>
+          </compilerPlugins>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
