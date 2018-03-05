@@ -293,7 +293,7 @@ object UtilsSVM extends biggis.landuse.spark.examples.UtilsML {
           .map( line => StringToLabeledPointWithKey(line)(delimiter))
         ToRDD(data.toIterator)
       }
-      data
+      //data
     }
     catch {
       case _: Throwable =>
