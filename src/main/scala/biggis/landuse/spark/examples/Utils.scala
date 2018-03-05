@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 object Utils extends LazyLogging {
 
   val TILE_SIZE = 256
-  val RDD_PARTITIONS = 32
+  val RDD_PARTITIONS = 256 //32
   val RESAMPLING_METHOD: ResampleMethod = Bilinear
 
   def initSparkAutoContext: SparkContext = {
