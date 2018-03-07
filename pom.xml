@@ -68,10 +68,13 @@
       <name>OpenGeo Maven Repository</name>
       <url>http://repo.opengeo.org</url>
     </repository>
-    <repository>
-      <id>org.locationtech.geotrellis</id>
-      <name>repo.locationtech.org</name>
-      <url>https://repo.locationtech.org/content/repositories/releases</url>
+    <repository> <!--Add the snapshot repository here-->
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>repo.locationtech.org</id>
+      <name>LocationTech Maven Repository</name>
+      <url>https://repo.locationtech.org/content/repositories/releases/</url>
     </repository>
   </repositories>
 
@@ -164,11 +167,11 @@
       <version>2.4.16</version>
     </dependency>
 
-   <!--dependency>
-      <groupId>com.typesafe.akka</groupId>
-      <artifactId>akka-slf4j_${scala.compat.version}</artifactId>
-      <version>2.4.17</version>
-    </dependency-->
+    <!--dependency>
+       <groupId>com.typesafe.akka</groupId>
+       <artifactId>akka-slf4j_${scala.compat.version}</artifactId>
+       <version>2.4.17</version>
+     </dependency-->
 
     <!--dependency>
       <groupId>com.typesafe.akka</groupId>
