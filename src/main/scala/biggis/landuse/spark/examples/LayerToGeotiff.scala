@@ -11,6 +11,7 @@ import geotrellis.spark.SpatialKey
 import geotrellis.spark.TileLayerMetadata
 import geotrellis.spark._
 import geotrellis.spark.io.SpatialKeyFormat
+import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.hadoop.HadoopAttributeStore
 import geotrellis.spark.io.hadoop.HadoopLayerReader
 import geotrellis.spark.io.spatialKeyAvroFormat
@@ -19,7 +20,8 @@ import geotrellis.spark.io.tileUnionCodec
 import geotrellis.spark.{io => _}
 import geotrellis.util._
 import geotrellis.vector.Extent
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
@@ -36,7 +38,7 @@ object LayerToGeotiff extends LazyLogging {
       logger debug "Spark context stopped"
     } catch {
       case _: MatchError => println("Run as: layerName outputPath /path/to/catalog")
-      case e: SparkException => logger error e.getMessage + ". Try to set JVM parmaeter: -Dspark.master=local[*]"
+      case e: SparkException => logger error e.getMessage + ". Try to set JVM parameter: -Dspark.master=local[*]"
     }
   }
 
@@ -62,6 +64,11 @@ object LayerToGeotiff extends LazyLogging {
     val metadata = inputRdd.metadata
 
     val crs = metadata.crs
+
+    // Hadoop Config is accessible from SparkContext
+    implicit val conf: Configuration = sc.hadoopConfiguration
+    val serConf = new SerializableConfiguration(conf)
+    //implicit val fs: FileSystem = FileSystem.get(conf);
 
     // ToDo: replace both "stitch" and "256x256 tiles" by "intelligent" tile size (as many as necessary, as few as possible)
     if (useStitching) { //Attn: stitched version may exceed max Memory, has georeference issues with WebMercator
@@ -90,12 +97,18 @@ object LayerToGeotiff extends LazyLogging {
       //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
       //.repartition(Utils.RDD_PARTITIONS)
 
+      /*
+      outputRdd.foreachPartition{ partition =>
+        partition.map(_.write(new Path("hdfs://..."), serConf.value))
+      } // */
       outputRdd.foreach(mbtile => {
         val (key, tile) = mbtile
         val (col, row) = (key.col, key.row)
         val tileextent: Extent = metadata.layout.mapTransform(key)
+        val filename = new Path(outputPath + "_" + col + "_" + row + ".tif")
+        logger info s" writing: '${filename.toString}'"
         GeoTiff(tile, tileextent, crs)
-          .write(outputPath + "_" + col + "_" + row + ".tif")
+          .write(filename, serConf.value)
       }
       )
     }

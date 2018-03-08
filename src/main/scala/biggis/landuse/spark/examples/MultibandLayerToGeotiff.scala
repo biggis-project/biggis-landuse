@@ -9,12 +9,14 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.io.geotiff.{MultibandGeoTiff, _}
+import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.hadoop.{HadoopAttributeStore, HadoopLayerReader}
 import geotrellis.spark.stitch._
 import geotrellis.spark.tiling.{FloatingLayoutScheme, LayoutDefinition, ZoomedLayoutScheme}
 import geotrellis.spark.{io => _, _}
 import geotrellis.vector.Extent
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.conf.Configuration
 import biggis.landuse.api.SpatialMultibandRDD
 import geotrellis.util.annotations.experimental
 
@@ -126,6 +128,11 @@ object MultibandLayerToGeotiff extends LazyLogging{
       metadata.bounds)
     // */
 
+    // Hadoop Config is accessible from SparkContext
+    implicit val conf: Configuration = sc.hadoopConfiguration
+    val serConf = new SerializableConfiguration(conf)
+    //implicit val fs: FileSystem = FileSystem.get(conf);
+
     if(useStitching){
       // one single GeoTiff, but attention
       val tiled: RDD[(SpatialKey, MultibandTile)] = inputRdd
@@ -146,12 +153,17 @@ object MultibandLayerToGeotiff extends LazyLogging{
       //.repartition(myRDD_PARTITIONS)
       //.tileToLayout(myMetadata.cellType, myMetadata.layout, myRESAMPLING_METHOD)
 
+      /*
+      outputRdd.foreachPartition{ partition =>
+        partition.map(_.write(new Path("hdfs://..."), serConf.value))
+      } // */
       outputRdd.foreach(mbtile => {
         val (key, tile) = mbtile
         val (col, row) = (key.col, key.row)
         val tileextent: Extent = metadata.layout.mapTransform(key)
+        val filename = new Path(outputPath + "_" + col + "_" + row + ".tif")
         MultibandGeoTiff(tile, tileextent, crs)
-          .write(outputPath + "_" + col + "_" + row + ".tif")
+          .write(filename, serConf.value)
       }
       )
     }
