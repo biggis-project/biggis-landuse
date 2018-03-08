@@ -97,20 +97,34 @@ object LayerToGeotiff extends LazyLogging {
       //.tileToLayout(metadata.cellType, metadata.layout, Utils.RESAMPLING_METHOD)
       //.repartition(Utils.RDD_PARTITIONS)
 
-      /*
-      outputRdd.foreachPartition{ partition =>
-        partition.map(_.write(new Path("hdfs://..."), serConf.value))
-      } // */
-      outputRdd.foreach(mbtile => {
-        val (key, tile) = mbtile
-        val (col, row) = (key.col, key.row)
-        val tileextent: Extent = metadata.layout.mapTransform(key)
-        val filename = new Path(outputPath + "_" + col + "_" + row + ".tif")
-        logger info s" writing: '${filename.toString}'"
-        GeoTiff(tile, tileextent, crs)
-          .write(filename, serConf.value)
+      val useSerializedHadoopConfig = true
+      if(useSerializedHadoopConfig){
+        // ToDo: test Spark Cluster version
+        outputRdd.foreachPartition { partition =>
+          partition.foreach { tuple =>
+            val (key, tile) = tuple
+            val (col, row) = (key.col, key.row)
+            val tileextent: Extent = metadata.layout.mapTransform(key)
+            val filename = new Path(outputPath + "_" + col + "_" + row + ".tif")
+            logger info s" writing: '${filename.toString}'"
+            GeoTiff(tile, tileextent, crs)
+              .write(filename, serConf.value)
+          }
+        }
+      } else {
+        // only for local debugging - do not use in cloud // ToDo: delete after testing
+        outputRdd.foreach(mbtile => {
+          val (key, tile) = mbtile
+          val (col, row) = (key.col, key.row)
+          val tileextent: Extent = metadata.layout.mapTransform(key)
+          //val filename = new Path(outputPath + "_" + col + "_" + row + ".tif")
+          //logger info s" writing: '${filename.toString}'"
+          GeoTiff(tile, tileextent, crs)
+            //.write(filename.toString) //.write(filename, serConf.value)
+            .write(outputPath + "_" + col + "_" + row + ".tif")
+        }
+        )
       }
-      )
     }
 
     //sc.stop()
