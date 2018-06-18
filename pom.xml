@@ -195,6 +195,14 @@
       <scope>${scopes.provided}</scope>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_${scala.compat.version}</artifactId>
+      <version>${spark.version}</version>
+      <scope>${scopes.provided}</scope>
+    </dependency>
+
     <!--dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka_${scala.compat.version}</artifactId>
