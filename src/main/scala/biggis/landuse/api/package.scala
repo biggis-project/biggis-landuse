@@ -26,8 +26,6 @@ import org.apache.spark.sql.SparkSession
 
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
-import scala.collection.JavaConverters._
-import java.lang.management.ManagementFactory
 
 /**
   * Created by Viliam Simko (viliam.simko@gmail.com)
@@ -382,17 +380,8 @@ package object api extends LazyLogging {
 
   def initSparkSession: SparkSession = {
     logger info s"initSparkSession "
-    val args: List[String] = ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.toList
-    args.find(_ == "-Dspark.master=local[*]") match {
-      case Some(_) =>
-        logger info s"calling initSparkContext for spark.master=local[*]"
-        SparkSession.builder
-          .getOrCreate()
-      case None =>
-        logger info s"calling initSparkContext with spark.jars=hdfs:///jobs/[...].jar"
-        SparkSession.builder
-          .config("spark.jars", "hdfs:///jobs/landuse-example/biggis-landuse-0.0.7-SNAPSHOT.jar") //TODO: get rid of the hardcoded JAR
-          .getOrCreate()
-    }
+    // Attn.: Please set spark.master and spark.jars externally (e.g. via Spark Submit JSON)! It will be handled by SparkSession automatically
+    SparkSession.builder
+      .getOrCreate()
   }
 }
