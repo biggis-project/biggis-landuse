@@ -19,6 +19,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.conf.Configuration
 import biggis.landuse.api.SpatialMultibandRDD
 import geotrellis.util.annotations.experimental
+import org.apache.spark.sql.SparkSession
 
 // https://github.com/geotrellis/geotrellis/blob/master/docs/spark/spark-examples.md
 
@@ -31,7 +32,9 @@ object MultibandLayerToGeotiff extends LazyLogging{
       val (layerName: String, zoomLevel: Int) =
         if(layerNameArray.length == 2) layerNameArray
         else if (layerNameArray.length == 1) (layerNameArray(0),-1)
-      implicit val sc : SparkContext = Utils.initSparkAutoContext  // do not use - only for dirty debugging
+      //implicit val sc : SparkContext = Utils.initSparkAutoContext  // do not use - only for dirty debugging
+      val sparkSession: SparkSession = biggis.landuse.api.initSparkSession
+      implicit val sc : SparkContext = sparkSession.sparkContext
       MultibandLayerToGeotiff(layerName, outputPath)(catalogPath, sc, zoomLevel)
       sc.stop()
       logger debug "Spark context stopped"
