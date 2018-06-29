@@ -5,8 +5,7 @@ import java.lang.management.ManagementFactory
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.HistogramDoubleFormat
-import geotrellis.raster.resample.Bilinear
-import geotrellis.raster.resample.ResampleMethod
+import geotrellis.raster.resample.{Bilinear, CubicConvolution, NearestNeighbor, ResampleMethod}
 import geotrellis.spark.LayerId
 import geotrellis.spark.io.AttributeStore
 import org.apache.spark.SparkConf
@@ -21,7 +20,7 @@ object Utils extends LazyLogging {
 
   val TILE_SIZE = 256
   val RDD_PARTITIONS = 256 //32
-  val RESAMPLING_METHOD: ResampleMethod = Bilinear
+  val RESAMPLING_METHOD: ResampleMethod = NearestNeighbor //Bilinear  //CubicConvolution
 
   def initSparkAutoContext: SparkContext = {
     logger info s"initSparkAutoContext "
