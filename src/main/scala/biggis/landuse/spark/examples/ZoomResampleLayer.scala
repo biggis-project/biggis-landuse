@@ -2,6 +2,7 @@ package biggis.landuse.spark.examples
 
 import biggis.landuse.api.SpatialMultibandRDD
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.spark.tiling.ZoomedLayoutScheme
 import geotrellis.spark.{LayerId, MultibandTileLayerRDD, TileLayerRDD, resample, _}
@@ -42,7 +43,9 @@ object ZoomResampleLayer extends LazyLogging {
 
   implicit def resampleLayerToZoom(rdd: MultibandTileLayerRDD[SpatialKey], zoomLevelIn: Int, zoomLevelOut: Int)(implicit sc: SparkContext): MultibandTileLayerRDD[SpatialKey] = {
     //geotrellis.spark.resample.Implicits.withZoomResampleMultibandMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
-    geotrellis.spark.resample.Implicits.withLayerRDDZoomResampleMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
+    //geotrellis.spark.resample.Implicits.withLayerRDDZoomResampleMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut)
+    //geotrellis.spark.resample.Implicits.withLayerRDDZoomResampleMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut, targetGridBounds = None, method = NearestNeighbor)
+    geotrellis.spark.resample.Implicits.withLayerRDDZoomResampleMethods(rdd).resampleToZoom(zoomLevelIn, zoomLevelOut, targetGridBounds = None, method = Utils.RESAMPLING_METHOD)
   }
 
 }
