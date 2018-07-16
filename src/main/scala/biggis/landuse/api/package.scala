@@ -38,6 +38,11 @@ package object api extends LazyLogging {
   type SpaceTimeMultibandRDD = RDD[(SpaceTimeKey, MultibandTile)] with Metadata[TileLayerMetadata[SpaceTimeKey]]  //MultibandTileLayerRDD[SpaceTimeKey]
 
   /**
+    * Converts SparkSession to SparkContext
+    * */
+  implicit def sessionToContext(spark: SparkSession): SparkContext = { spark.sparkContext }
+
+  /**
     * Converts RemoteIterator from Hadoop to Scala Iterator that provides all the familiar functions such as map,
     * filter, foreach, etc.
     *
