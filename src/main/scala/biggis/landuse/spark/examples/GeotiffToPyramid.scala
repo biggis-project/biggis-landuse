@@ -37,7 +37,7 @@ object GeotiffToPyramid extends LazyLogging {
     implicit val sc = Utils.initSparkContext
 
     val inputRdd = sc.hadoopGeoTiffRDD(inputPath)
-    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
+    val (_, myRasterMetaData) = TileLayerMetadata.fromRDD(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
 
     val tiled = inputRdd
       .tileToLayout(myRasterMetaData.cellType, myRasterMetaData.layout, Bilinear)
