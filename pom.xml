@@ -80,6 +80,19 @@
 
   <dependencies>
 
+    <!-- ==== Shapeless ========================== -->
+    <!--dependency>
+      <groupId>com.chuusai</groupId>
+      <artifactId>shapeless_${scala.compat.version}</artifactId>
+      <version>1.2.4</version>
+    </dependency-->
+
+    <dependency>
+      <groupId>com.chuusai</groupId>
+      <artifactId>shapeless_${scala.compat.version}</artifactId>
+      <version>2.3.2</version>
+    </dependency>
+
     <!-- ==== GEOTRELLIS ========================== -->
     <dependency>
       <groupId>org.locationtech.geotrellis</groupId>
@@ -149,9 +162,15 @@
 
     <!-- ==== WEB FRONTEND ========================== -->
 
-    <dependency>
+    <!--dependency>
       <groupId>io.spray</groupId>
       <artifactId>spray-routing_${scala.compat.version}</artifactId>
+      <version>1.3.3</version>
+    </dependency-->
+
+    <dependency>
+      <groupId>io.spray</groupId>
+      <artifactId>spray-routing-shapeless2_${scala.compat.version}</artifactId>
       <version>1.3.3</version>
     </dependency>
 
