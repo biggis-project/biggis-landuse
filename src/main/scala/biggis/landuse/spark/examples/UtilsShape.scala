@@ -32,6 +32,7 @@ object UtilsShape extends LazyLogging{
         .map { feat =>
           Feature(MultiPolygon.jts2MultiPolygon(feat.geom[jts.MultiPolygon].get), feat.attribute(attribName))
         }
+        .toList
     }
     else if(shapefileName.contains(".geojson")){
       readGeoJSONMultiPolygonLongAttribute(shapefileName, attribName)
