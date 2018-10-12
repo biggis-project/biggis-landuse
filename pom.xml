@@ -31,7 +31,7 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.11.8</scala.version>
     <scala.compat.version>2.11</scala.compat.version>
-    <geotrellis.version>1.2.1</geotrellis.version>
+    <geotrellis.version>2.0.0</geotrellis.version>
     <spark.version>2.2.0</spark.version>
     <kafka.version>0.10.2.0</kafka.version>
     <scopes.provided>provided</scopes.provided>
@@ -79,6 +79,19 @@
   </repositories>
 
   <dependencies>
+
+    <!-- ==== Shapeless ========================== -->
+    <!--dependency>
+      <groupId>com.chuusai</groupId>
+      <artifactId>shapeless_${scala.compat.version}</artifactId>
+      <version>1.2.4</version>
+    </dependency-->
+
+    <dependency>
+      <groupId>com.chuusai</groupId>
+      <artifactId>shapeless_${scala.compat.version}</artifactId>
+      <version>2.3.2</version>
+    </dependency>
 
     <!-- ==== GEOTRELLIS ========================== -->
     <dependency>
@@ -149,9 +162,15 @@
 
     <!-- ==== WEB FRONTEND ========================== -->
 
-    <dependency>
+    <!--dependency>
       <groupId>io.spray</groupId>
       <artifactId>spray-routing_${scala.compat.version}</artifactId>
+      <version>1.3.3</version>
+    </dependency-->
+
+    <dependency>
+      <groupId>io.spray</groupId>
+      <artifactId>spray-routing-shapeless2_${scala.compat.version}</artifactId>
       <version>1.3.3</version>
     </dependency>
 

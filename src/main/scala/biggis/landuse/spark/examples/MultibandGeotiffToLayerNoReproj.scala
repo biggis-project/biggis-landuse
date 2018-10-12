@@ -48,7 +48,7 @@ object MultibandGeotiffToLayerNoReproj extends LazyLogging {
 
     logger debug "Opening geotiff as RDD"
     val inputRdd = sc.hadoopMultibandGeoTiffRDD(inputPath)
-    val (_, myRasterMetaData) = TileLayerMetadata.fromRdd(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
+    val (_, myRasterMetaData) = TileLayerMetadata.fromRDD(inputRdd, FloatingLayoutScheme(Utils.TILE_SIZE))
 
     val myRESAMPLING_METHOD = geotrellis.raster.resample.NearestNeighbor //Utils.RESAMPLING_METHOD
 
