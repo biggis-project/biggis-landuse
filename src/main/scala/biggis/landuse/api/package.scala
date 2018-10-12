@@ -83,7 +83,8 @@ package object api extends LazyLogging {
     // we do this because geotrellis leaves an empty directory behind
     // we could delete this step once geotrellis implementation is fixed
     val layerPath = store.rootPath.suffix(s"/$layerName")
-    store.fs.delete(layerPath, true)
+    if(store.fs.exists(layerPath))
+      store.fs.delete(layerPath, true)
   }
 
   /**
