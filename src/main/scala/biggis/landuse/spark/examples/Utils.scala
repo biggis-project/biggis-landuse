@@ -22,6 +22,7 @@ object Utils extends LazyLogging {
   val RDD_PARTITIONS = 256 //32
   val RESAMPLING_METHOD: ResampleMethod = NearestNeighbor //Bilinear  //CubicConvolution
 
+  @deprecated("replace by implicit def biggis.landuse.api.sessionToContext(spark: SparkSession): SparkContext = { spark.sparkContext }", "Oct 2018")
   def initSparkAutoContext: SparkContext = {
     logger info s"initSparkAutoContext "
     val args: List[String] = ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.toList
@@ -47,6 +48,7 @@ object Utils extends LazyLogging {
     new SparkContext(sparkConf)
   }
 
+  @deprecated("replace by implicit def biggis.landuse.api.sessionToContext(spark: SparkSession): SparkContext = { spark.sparkContext }", "Oct 2018")
   def initSparkContext: SparkContext = {
     val sparkConf = new SparkConf()
     sparkConf.setAppName("Geotrellis Example")
@@ -61,13 +63,16 @@ object Utils extends LazyLogging {
     new SparkContext(sparkConf)
   }
 
+  @deprecated("replace by implicit def biggis.landuse.api.sessionToContext(spark: SparkSession): SparkContext = { spark.sparkContext }", "Oct 2018")
   def initSparkClusterContext: SparkContext = {
 
     val sparkConf = new SparkConf()
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
-    //TODO: get rid of the hardcoded JAR
-    sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.7-SNAPSHOT.jar"))
+    //TODO: get rid of the hardcoded JAR - replace by spark: SparkSession -> spark.sparkContext
+    sparkConf.setJars(Seq("hdfs:///jobs/landuse-example/biggis-landuse-0.0.8-SNAPSHOT.jar"))
+
+    // implicit def biggis.landuse.api.sessionToContext(spark: SparkSession): SparkContext = { spark.sparkContext }
 
     // We also need to set the spark master.
     // instead of  hardcoding it using sparkConf.setMaster("local[*]")
